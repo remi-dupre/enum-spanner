@@ -62,16 +62,20 @@ def example_4():
 
 INSTANCES = [
     {
+        'name': 'automata 1',
         'automata': example_1(),
         'documents': ['', 'aaaaaaaaaaaaa', 'bbbbb', 'aaaabbaaababbbb']
     }, {
+        'name': 'automata 2',
         'automata': example_2(),
         'documents': ['a bba a@b b@a aaa@bab abbababaa@@@babbabb']
     }, {
+        'name': 'automata 3',
         'automata': example_3(),
-        'documents': ['abcdefghijklmnopqrstuvwxyz', 'a' * 100]
+        'documents': ['abcdefghijklmnopqrstuvwxyz']
     }, {
+        'name': 'automata 4',
         'automata': example_4(),
-        'documents': ['aaaabbbb', 'bbbaaababaaaaaabbbbabbbbbababababbababbabb']
+        'documents': ['ab', 'aaaabbbb', 'bbbaaababaaaaaabbbbabbbababbababbabb']
     },
 ]

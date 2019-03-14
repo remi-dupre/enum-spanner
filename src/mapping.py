@@ -60,3 +60,19 @@ def is_valid_mapping(variables, mapping):
             return False
 
     return True
+
+
+def print_mapping(document: str, mapping: list):
+    symbols = {i : [] for i in range(len(document) + 1)}
+
+    for marker, i in mapping:
+        symbols[i].append(marker)
+
+    for i in range(len(document) + 1):
+        for marker in symbols[i]:
+            print(f'|{marker}|', end='')
+
+        if i < len(document):
+            print(document[i], end='')
+
+    print('')
