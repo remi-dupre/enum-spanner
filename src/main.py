@@ -1,6 +1,7 @@
 import dag
 import examples
 from enum_mappings import enum_mappings
+from naive import naive_enum_matchings
 
 
 A = dag.product_dag(examples.example_1(), 'abaabbba')
@@ -16,4 +17,8 @@ C.remove_useless_nodes()
 #  C.view()
 
 for x in enum_mappings(C, [C.initial], []):
+    print(x)
+
+print('naive:')
+for x in naive_enum_matchings(examples.example_3(), 'aaaaa'):
     print(x)
