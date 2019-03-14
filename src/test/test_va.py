@@ -6,7 +6,7 @@ def test_variables():
     var2 = Variable('y')
 
     assert var1 == var1
-    assert var2 == var2
+    assert var1 != var2
 
 
 def test_markers():

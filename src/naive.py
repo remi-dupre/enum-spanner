@@ -2,7 +2,7 @@ from mapping import Variable, is_valid_mapping
 from va import VA
 
 
-def naive_enum_matchings(va: VA, text: str):
+def naive_enum_mappings(va: VA, text: str):
     # The heap contains tuples (state, curr_char, assignation)
     heap = [(va.initial, 0, [])]
 
