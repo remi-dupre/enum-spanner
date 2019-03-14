@@ -1,26 +1,31 @@
 from va import VA, Variable
 
 
+
 class DAG:
 
-    def __init__(self, nb_vertices):
-        # Number of vertices in the DAG, they will be identified by indexes
-        # starting from 0
-        self.nb_vertices = nb_vertices
+    def __init__(self):
+        # List of vertices in the DAG, all identified by a unique id
+        self.vertices = set()
 
         # Initial and final vertices are defined as extremums by defaults
-        self.initial = 0
-        self.final = self.nb_vertices - 1
+        self.initial = None
+        self.final = None
 
         # Adjacency list of the DAG as a list of (label, target) or epsilon
         # transition (None, target) for each source vertex
-        self.adj = [[] for _ in range(nb_vertices)]
+        self.adj = dict()
 
-    def run_from(self, source: int):
+    def add_vertex(self, node_id):
+        assert node_id not in self.vertices
+        self.vertices.add(node_id)
+        self.adj[node_id] = list()
+
+    def run_from(self, source):
         '''
         Enumerate accessible states from a given source.
         '''
-        accessible = [False for i in range(self.nb_vertices)]
+        accessible = {state: False for state in self.vertices}
         accessible[source] = True
         heap = [source]
 
@@ -38,33 +43,32 @@ class DAG:
         Enumerate co-accessible states from a given source.
         '''
         # Build DAG with reversed edges, initial and final states won't matter
-        codag = DAG(self.nb_vertices)
+        codag = DAG()
 
-        for s in range(self.nb_vertices):
+        for s in self.vertices:
+            if s not in codag.vertices:
+                codag.add_vertex(s)
+
             for label, t in self.adj[s]:
+                if t not in codag.vertices:
+                    codag.add_vertex(t)
+
                 codag.adj[t].append((label, s))
 
         return codag.run_from(source)
 
-    def trim(self, states: list):
+    def trim(self, vertices: list):
         '''
         Trim the graph by only keeping states that belong to the input list of
         states. States are arbitrary reindexed.
         '''
-        old_states = states
-        new_states = {old: new for new, old in enumerate(old_states)}
-        n = len(old_states)
+        self.vertices = vertices.copy()
+        new_adj = {v: [] for v in self.vertices}
 
-        new_adj = [[] for _ in range(n)]
-
-        for s in range(n):
-            for a, t_old in self.adj[old_states[s]]:
-                if t_old in new_states:
-                    new_adj[s].append((a, new_states[t_old]))
-
-        self.nb_vertices = n
-        self.initial = 0
-        self.final = new_states[self.final]
+        new_adj.update({
+            s: [(label, t) for (label, t) in self.adj[s] if t in vertices]
+            for s in vertices
+        })
         self.adj = new_adj
 
     def remove_useless_nodes(self):
@@ -85,41 +89,50 @@ class DAG:
             var, pos = label
             return f'ε({pos})' if var is None else f'{var}({pos})'
 
-        transitions = [(s, label_str(a), t) for s in range(self.nb_vertices)
+        transitions = [(s, label_str(a), t) for s in self.vertices
                        for a, t in self.adj[s]]
-        return (f'DAG(nb_vertices={self.nb_vertices}, initial={self.initial}, '
+        return (f'DAG(vertices={self.vertices}, initial={self.initial}, '
                 f'final={self.final}, adj={transitions})')
 
 
 def product_dag(va: VA, text: str) -> DAG:
-    n = len(text)
-    vf = (n + 1) * va.nb_states
+    dag = DAG()
+    dag.add_vertex('vf')
+    dag.add_vertex(('q0', 0))
+    dag.initial = 'q0', 0
+    dag.final = 'vf'
 
-    def state_of_pair(q, i):
-        ret = q * (n + 1) + i
-        assert ret < dag.nb_vertices
-        return ret
+    for s in range(va.nb_states):
+        for i in range(len(text) + 1):
+            state_id = f'q{s}', i
 
-    dag = DAG(vf + 1)
-    dag.initial = state_of_pair(0, 0)
-    dag.final = vf
+            if state_id not in dag.vertices:
+                dag.add_vertex(state_id)
 
     for s, a, t in va.transitions:
         for t_i, t_a in enumerate(text):
+            id_s = f'q{s}', t_i
+
             if isinstance(a, Variable.Marker):
-                id_s = state_of_pair(s, t_i)
-                id_t = state_of_pair(t, t_i)
+                id_t = f'q{t}', t_i
                 label = a, t_i
                 dag.adj[id_s].append((label, id_t))
             elif a in ['*', t_a]:
-                id_s = state_of_pair(s, t_i)
-                id_t = state_of_pair(t, t_i+1)
+                id_t = f'q{t}', t_i + 1
                 label = None, t_i
                 dag.adj[id_s].append((label, id_t))
 
+        # Add transitions for the last level
+        if isinstance(a, Variable.Marker):
+            id_s = f'q{s}', len(text)
+            id_t = f'q{t}', len(text)
+            label = a, len(text)
+            dag.adj[id_s].append((label, id_t))
+
+
+
     for s in va.final:
-        id_s = state_of_pair(s, n)
-        print(id_s)
-        dag.adj[id_s].append(((None, n), vf))
+        id_s = f'q{s}', len(text)
+        dag.adj[id_s].append(((None, len(text)), 'vf'))
 
     return dag
