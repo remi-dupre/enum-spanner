@@ -74,16 +74,17 @@ class DAG:
 
     def remove_useless_nodes(self):
         '''
-        Remove nodes that are not accessible or not co-accessible.
+        Remove nodes that are not accessible or not co-accessible, if the
+        initial state is not coaccessible or the final state is not accessible,
+        the function fails with no predicate on the resulting DAG.
         '''
         accessible = list(self.run_from(self.initial))
+        assert self.final in accessible
         self.trim(accessible)
 
         coaccessible = list(self.corun_from(self.final))
+        assert self.initial in coaccessible
         self.trim(coaccessible)
-
-    def copy(self):
-        pass
 
     def view(self):
         dot = Digraph('Example')

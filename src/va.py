@@ -26,9 +26,9 @@ class Variable:
 
         def __repr__(self):
             if self.type is Variable.Marker.Type.OPEN:
-                return '⊣' + str(self.variable)
+                return '⊢' + str(self.variable)
             if self.type is Variable.Marker.Type.CLOSE:
-                return str(self.variable) + '⊢'
+                return str(self.variable) + '⊣'
 
             return 'wrong_marker'
 

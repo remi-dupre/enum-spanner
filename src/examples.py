@@ -26,3 +26,13 @@ def example_2():
         (5, '*', 5)]
     final = [4, 5]
     return VA(6, transitions, final)
+
+def example_3():
+    x = Variable('x')
+    transitions = [
+        (0, '*', 0), (0, x.marker_open(), 1),
+        (1, '*', 1), (1, x.marker_close(), 2),
+        (2, '*', 2)
+    ]
+    final = [2]
+    return VA(3, transitions, final)
