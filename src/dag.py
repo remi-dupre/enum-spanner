@@ -1,5 +1,6 @@
-from va import VA, Variable
+from graphviz import Digraph
 
+from va import VA, Variable
 
 
 class DAG:
@@ -83,6 +84,30 @@ class DAG:
 
     def copy(self):
         pass
+
+    def view(self):
+        dot = Digraph('Example')
+
+        def node_id(node):
+            if node in ['vf']:
+                return str(node)
+
+            return ','.join(map(str, node))
+
+        def label_str(label):
+            if label[0] is None:
+                return 'ε'
+
+            return str(label[0])
+
+        for node in self.vertices:
+            dot.node(node_id(node))
+
+        for s in self.vertices:
+            for label, t in self.adj[s]:
+                dot.edge(node_id(s), node_id(t), label_str(label))
+
+        dot.render(view=True)
 
     def __str__(self):
         def label_str(label):

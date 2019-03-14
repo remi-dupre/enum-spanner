@@ -18,8 +18,8 @@ def example_1():
 def example_2():
     x = Variable('x')
     transitions = [
-        (0, ' ', 1), (0, '*', 0), (0, x.marker_open(), 2),
-        (1, x.marker_open(), 2),
+        (0, ' ', 0), (0, '*', 1), (0, x.marker_open(), 2),
+        (1, ' ', 0), (1, '*', 1),
         (2, '@', 3), (2, 'a', 2), (2, 'b', 2),
         (3, x.marker_close(), 4), (3, 'a', 3), (3, 'b', 3),
         (4, ' ', 5),
