@@ -1,5 +1,5 @@
-from mapping import is_valid_mapping
-from va import VA, Variable
+from mapping import Variable, is_valid_mapping
+from va import VA
 
 
 def naive_enum_matchings(va: VA, text: str):

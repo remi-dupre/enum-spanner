@@ -1,4 +1,4 @@
-from va import Variable
+from mapping import Variable
 
 
 def test_variables():

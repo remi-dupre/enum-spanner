@@ -1,41 +1,6 @@
-from enum import Enum
 from functools import lru_cache
 
-
-class Variable:
-
-    def __init__(self, name):
-        self.name = name
-
-    def marker_open(self):
-        return Variable.Marker(self, Variable.Marker.Type.OPEN)
-
-    def marker_close(self):
-        return Variable.Marker(self, Variable.Marker.Type.CLOSE)
-
-    def __str__(self):
-        return str(self.name)
-
-    class Marker:
-
-        def __init__(self, variable, m_type):
-            self.variable = variable
-            self.type = m_type
-
-        def __eq__(self, other):
-            return self.variable == other.variable and self.type == other.type
-
-        def __repr__(self):
-            if self.type is Variable.Marker.Type.OPEN:
-                return '⊢' + str(self.variable)
-            if self.type is Variable.Marker.Type.CLOSE:
-                return str(self.variable) + '⊣'
-
-            return 'wrong_marker'
-
-        class Type(Enum):
-            OPEN = 1
-            CLOSE = 2
+from mapping import Variable
 
 
 class VA:

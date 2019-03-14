@@ -1,6 +1,7 @@
 from graphviz import Digraph
 
-from va import VA, Variable
+from mapping import Variable
+from va import VA
 
 
 class DAG:

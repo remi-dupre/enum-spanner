@@ -1,4 +1,5 @@
-from va import VA, Variable
+from mapping import Variable
+from va import VA
 
 
 def example_1():
