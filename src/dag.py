@@ -84,8 +84,8 @@ class DAG:
         assert self.initial in coaccessible
         self.trim(coaccessible)
 
-    def view(self):
-        dot = Digraph('Example')
+    def render(self, name):
+        dot = Digraph(name)
 
         def node_id(node):
             if node in ['vf']:
@@ -106,7 +106,7 @@ class DAG:
             for label, t in self.adj[s]:
                 dot.edge(node_id(s), node_id(t), label_str(label))
 
-        dot.render(view=True)
+        dot.render()
 
     def __str__(self):
         def label_str(label):
