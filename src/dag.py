@@ -86,6 +86,7 @@ class DAG:
 
     def render(self, name):
         dot = Digraph(name)
+        dot.attr('node', shape='circle')
 
         def node_id(node):
             if node in ['vf']:
@@ -95,12 +96,22 @@ class DAG:
 
         def label_str(label):
             if label[0] is None:
-                return 'ε'
+                return ' ε '
 
-            return str(label[0])
+            return f' {label[0] } '
 
-        for node in self.vertices:
-            dot.node(node_id(node))
+        #  levels = dict()
+        #
+        #  for node in self.vertices:
+        #      if node != 'vf':
+        #          if node[1] not in levels:
+        #              levels[node[1]] = []
+        #          levels[node[1]].append(node_id(node))
+        #
+        #  for level, nodes in levels.items():
+        #      with dot.subgraph(name=f'cluster_{level}') as c:
+        #          for node in nodes:
+        #              c.node(node)
 
         for s in self.vertices:
             for label, t in self.adj[s]:

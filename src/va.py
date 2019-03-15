@@ -1,4 +1,5 @@
 from functools import lru_cache
+from graphviz import Digraph
 
 from mapping import Variable
 
@@ -54,3 +55,21 @@ class VA:
         for s, _, t in self.transitions:
             assert s in range(self.nb_states)
             assert t in range(self.nb_states)
+
+    def render(self, name):
+        dot = Digraph(name)
+
+        dot.attr('node', shape='point')
+        dot.node(f'before_q{self.initial}')
+
+        dot.attr('node', shape='doublecircle')
+        for final in self.final:
+            dot.node(f'q{final}')
+
+        dot.attr('node', shape='circle')
+        dot.edge(f'before_q{self.initial}', f'q{self.initial}')
+
+        for source, label, target in self.transitions:
+            dot.edge(f'q{source}', f'q{target}', f' {label} ')
+
+        dot.render()
