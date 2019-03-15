@@ -48,7 +48,7 @@ def product_dag(va: VA, text: str) -> DAG:
 def has_outgoing_epsilon(dag, s):
     '''
     Check if an edge in a DAG has an outgoing edge labeled with and
-    epsilon-transition
+    epsilon-transition.
     '''
     for label, _ in dag.adj[s]:
         if label[0] is None:
@@ -83,25 +83,27 @@ def next_level(dag, gamma):
     for key, gamma2 in outputs.items():
         yield outputs_Sp[key], list(set(gamma2))
 
-# TODO: heap instead of recursion
-def enum_dag_mappings(dag, gamma, mapping):
+def enum_dag_mappings(dag):
 
     def jump(x):
         return x
 
-    gamma = jump(gamma)
+    # a stack of pairs (gamma, mapping)
+    stack = [([dag.initial], [])]
 
-    # Check if final state is reached
-    if len(gamma) == 1 and gamma[0] == dag.final:
-        yield mapping
-    else:
-        #  print('NextLevel of', gamma, 'is', list(next_level(dag, gamma)))
-        for Sp, gamma2 in next_level(dag, gamma):
-            new_mapping = mapping.copy()
-            new_mapping.extend(Sp)
-            yield from enum_dag_mappings(dag, gamma2, new_mapping)
+    while stack:
+        gamma, mapping = stack.pop()
+        gamma = jump(gamma)
+
+        if len(gamma) == 1 and gamma[0] == dag.final:
+            yield mapping
+        else:
+            for Sp, new_gamma in next_level(dag, gamma):
+                new_mapping = mapping.copy()
+                new_mapping.extend(Sp)
+                stack.append((new_gamma, new_mapping))
 
 def enum_mappings(va: VA, text: str):
     dag = product_dag(va, text)
     dag.remove_useless_nodes()
-    yield from enum_dag_mappings(dag, [dag.initial], [])
+    yield from enum_dag_mappings(dag)
