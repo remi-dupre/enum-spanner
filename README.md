@@ -5,6 +5,8 @@ This is an implementation of the algorithm published by Amarilli, Bourhis,
 Mengel and Niewerth at [ICDT'2019](https://arxiv.org/abs/1807.09320) for
 Constant-Delay Enumeration for Nondeterministic Document Spanners
 
+**This code is under development and is not yet usable at that stage.**
+
 
 Usage
 -----
