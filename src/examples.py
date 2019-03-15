@@ -63,23 +63,46 @@ def example_4():
     final = [8, 9]
     return VA(10, transitions, final)
 
+def example_5():
+    '''
+    Match email addresses in the form [a.]*@a*.a*
+    '''
+    x = Variable('x')
+    transitions = [
+        (0, '*', 0), (0, x.marker_open(), 1),
+        (1, 'a', 2),
+        (2, 'a', 2), (2, '.', 2), (2, '@', 3),
+        (3, 'a', 4),
+        (4, 'a', 4), (4, '.', 5),
+        (5, 'a', 6),
+        (6, 'a', 6), (6, x.marker_close(), 7),
+        (7, '*', 7)
+    ]
+    final = [7]
+    return VA(8, transitions, final)
 
 INSTANCES = [
     {
-        'name': 'automata 1',
+        'name': 'block_a',
         'automata': example_1(),
         'documents': ['a', 'aaaaaaaaaaaaa', 'bbbabb', 'aaaabbaaababbbb']
     }, {
-        'name': 'automata 2',
+        'name': 'sep_email',
         'automata': example_2(),
         'documents': ['a bba a@b b@a aaa@bab abbababaa@@@babbabb']
     }, {
-        'name': 'automata 3',
+        'name': 'substrings',
         'automata': example_3(),
         'documents': ['abcdefghijklmnopqrstuvwxyz']
     }, {
-        'name': 'automata 4',
+        'name': 'ordered_blocks',
         'automata': example_4(),
         'documents': ['ab', 'aaaabbbb', 'bbbaaababaaaaaabbbbabbbababbababbabb']
     },
+    {
+        'name': 'mixed_emails',
+        'automata': example_5(),
+        'documents': ['aaaa@aaa.aa', 'aa@aa a@a.a@a.a.a@a.a.a.a@a.a.a.a.a']
+        }
+
 ]

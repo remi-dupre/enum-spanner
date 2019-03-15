@@ -1,8 +1,12 @@
 import examples
+from benchmark import bench, random_word
 from enum_mappings import enum_mappings, product_dag
 from mapping import print_mapping
+from naive import naive_enum_mappings
+from va import VA
 
 
+# Output unit tests results
 for example in examples.INSTANCES:
     name = example['name']
     automata = example['automata']
@@ -22,3 +26,25 @@ for example in examples.INSTANCES:
 
         for mapping in enum_mappings(automata, document):
             print_mapping(document, mapping)
+
+
+# Run benchmarks
+automata = examples.example_5()
+inputs = {
+    'random': random_word(10**5, ' aaaa..@')
+}
+
+
+print('\n')
+def naive_algorithm(va: VA):
+    return lambda x: naive_enum_mappings(va, x)
+
+def standart_algorithm(va: VA):
+    return lambda x: enum_mappings(va, x)
+
+
+print('\nBenchmark for standart algorithm')
+bench(standart_algorithm(automata), inputs)
+
+print('\nBenchmark for naive algorithm')
+bench(naive_algorithm(automata), inputs)

@@ -1,3 +1,4 @@
+from colorama import Fore, Style
 from enum import Enum
 
 
@@ -70,7 +71,10 @@ def print_mapping(document: str, mapping: list):
 
     for i in range(len(document) + 1):
         for marker in symbols[i]:
-            print(f'|{marker}|', end='')
+            if marker.type == Variable.Marker.Type.OPEN:
+                print(f'{Style.DIM}|{marker}|{Style.BRIGHT}{Fore.RED}', end='')
+            else:
+                print(f'{Style.RESET_ALL}{Style.DIM}{Fore.WHITE}|{marker}|{Style.RESET_ALL}', end='')
 
         if i < len(document):
             print(document[i], end='')
