@@ -1,3 +1,4 @@
+from benchmark import track
 from dag import DAG
 from mapping import Variable
 from va import VA
@@ -57,6 +58,7 @@ def has_outgoing_epsilon(dag, s):
     return False
 
 # TODO correctly
+@track
 def next_level(dag, gamma):
     outputs = dict()
     outputs_Sp = dict()
