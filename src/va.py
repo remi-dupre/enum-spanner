@@ -25,8 +25,9 @@ class VA:
     def adj(self):
         '''
         Get the adjacency list of the automata, this property is cached for
-        performance purpose, beware of not changing the structure of the
-        automata after calling it.
+        performance purpose.
+
+        Beware of not changing the structure of the automata after calling it.
         '''
         ret = [[] for _ in range(self.nb_states)]
 

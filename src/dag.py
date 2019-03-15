@@ -1,3 +1,4 @@
+from functools import lru_cache
 from graphviz import Digraph
 
 
@@ -19,6 +20,22 @@ class DAG:
         assert node_id not in self.vertices
         self.vertices.add(node_id)
         self.adj[node_id] = list()
+
+    @property
+    @lru_cache(1)
+    def coadj(self):
+        '''
+        Get the adjacency list of the co-DAG, this property is cached for
+        performance purpose.
+
+        Beware of not changing the structure of the DAG after calling it.
+        '''
+        coadj = {v : [] for v in self.vertices}
+
+        for source, label, target in self.edges:
+            coadj[target].append((label, source))
+
+        return coadj
 
     @property
     def edges(self):
@@ -51,15 +68,8 @@ class DAG:
         # Build DAG with reversed edges, initial and final states won't matter
         codag = DAG()
 
-        for s in self.vertices:
-            if s not in codag.vertices:
-                codag.add_vertex(s)
-
-            for label, t in self.adj[s]:
-                if t not in codag.vertices:
-                    codag.add_vertex(t)
-
-                codag.adj[t].append((label, s))
+        codag.vertices = self.vertices
+        codag.adj = self.coadj
 
         return codag.run_from(source)
 

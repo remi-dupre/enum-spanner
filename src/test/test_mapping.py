@@ -1,8 +1,7 @@
 import pytest
 
 import examples
-from enum_mappings import enum_mappings
-from naive import naive_enum_mappings
+from enum_mappings import enum_mappings, naive_enum_mappings
 
 
 def test_run_example():
