@@ -32,8 +32,8 @@ print('\n----- Run benchmarks')
 
 automata = examples.example_4()
 inputs = {
-    'repeat': 'aaaaabbbbb' * 10**3,
-    'random': random_word(10**4, 'ab'),
+    'repeat': 'aaaaabbbbb' * 10**4,
+    'random': random_word(10**5, 'ab'),
     # 'random': random_word(10**5, ' aaaa..@')
 }
 

@@ -1,5 +1,5 @@
 from benchmark import track
-from enum_mappings.precompute_dag import precompute_jump
+from enum_mappings.precompute_dag import Jump
 
 
 def has_outgoing_epsilon(dag, s):
@@ -42,7 +42,7 @@ def next_level(dag, gamma):
         yield outputs_Sp[key], list(set(gamma2))
 
 def enum_dag_mappings(dag):
-    jump = precompute_jump(dag)
+    jump = Jump(dag)
 
     # a stack of pairs (gamma, mapping)
     stack = [([dag.initial], [])]
