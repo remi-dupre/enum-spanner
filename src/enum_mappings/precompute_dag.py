@@ -1,6 +1,7 @@
 import numpy
 import types
 
+from benchmark import track
 from dag import DAG
 from mapping import Variable
 from va import VA
@@ -88,7 +89,7 @@ class LevelSet:
     def max_level(self):
         return len(self.vertices) - 1
 
-
+@track
 class Jump:
     '''
     Function that allows jumping from a set of vertices to the closest set of

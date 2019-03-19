@@ -1,3 +1,4 @@
+import random
 from colorama import Fore, Style
 from enum import Enum
 
@@ -6,12 +7,19 @@ class Variable:
 
     def __init__(self, name):
         self.name = name
+        self.id = random.getrandbits(128)
 
     def marker_open(self):
         return Variable.Marker(self, Variable.Marker.Type.OPEN)
 
     def marker_close(self):
         return Variable.Marker(self, Variable.Marker.Type.CLOSE)
+
+    def __eq__(self, other):
+        return isinstance(other, Variable) and self.id == other.id
+
+    def __hash__(self):
+        return self.id
 
     def __str__(self):
         return str(self.name)
@@ -24,6 +32,21 @@ class Variable:
 
         def __eq__(self, other):
             return self.variable == other.variable and self.type == other.type
+
+        def __lt__(self, other):
+            if (self.type == Variable.Marker.Type.OPEN and
+                    other.type == Variable.Marker.Type.CLOSE):
+                return True
+
+            return str(self.variable) < str(other.variable)
+
+        def __hash__(self):
+            ret = hash(self.variable)
+
+            if self.type == Variable.Marker.Type.OPEN:
+                ret += 1
+
+            return ret
 
         def __repr__(self):
             if self.type is Variable.Marker.Type.OPEN:
@@ -68,6 +91,7 @@ def print_mapping(document: str, mapping: list):
 
     for marker, i in mapping:
         symbols[i].append(marker)
+        symbols[i].sort()
 
     for i in range(len(document) + 1):
         for marker in symbols[i]:

@@ -98,11 +98,9 @@ INSTANCES = [
         'name': 'ordered_blocks',
         'automata': example_4(),
         'documents': ['ab', 'aaaabbbb', 'bbbaaababaaaaaabbbbabbbababbababbabb']
-    },
-    {
+    }, {
         'name': 'mixed_emails',
         'automata': example_5(),
         'documents': ['aaaa@aaa.aa', 'aa@aa a@a.a@a.a.a@a.a.a.a@a.a.a.a.a']
-        }
-
+    },
 ]

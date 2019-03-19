@@ -1,5 +1,5 @@
 import examples
-from benchmark import bench, random_word
+from benchmark import bench, random_word, print_tracking
 from enum_mappings import enum_mappings, naive_enum_mappings
 from enum_mappings.precompute_dag import product_dag
 from mapping import print_mapping
@@ -48,3 +48,5 @@ bench(standart_algorithm(automata), inputs)
 
 print('\nBenchmark for naive algorithm')
 bench(naive_algorithm(automata), inputs)
+
+print_tracking()
