@@ -18,6 +18,9 @@ class Variable:
     def __eq__(self, other):
         return isinstance(other, Variable) and self.id == other.id
 
+    def __lt__(self, other):
+        return self.id < other.id
+
     def __hash__(self):
         return self.id
 
@@ -31,14 +34,10 @@ class Variable:
             self.type = m_type
 
         def __eq__(self, other):
-            return self.variable == other.variable and self.type == other.type
+            return (self.variable, self.type) == (other.variable, other.type)
 
         def __lt__(self, other):
-            if (self.type == Variable.Marker.Type.OPEN and
-                    other.type == Variable.Marker.Type.CLOSE):
-                return True
-
-            return str(self.variable) < str(other.variable)
+            return (self.type, self.variable) < (other.type, other.variable)
 
         def __hash__(self):
             ret = hash(self.variable)
@@ -59,6 +58,11 @@ class Variable:
         class Type(Enum):
             OPEN = 1
             CLOSE = 2
+
+            def __lt__(self, other):
+                if self.__class__ is other.__class__:
+                    return self.value < other.value
+                return NotImplemented
 
 
 def is_valid_mapping(variables, mapping):
