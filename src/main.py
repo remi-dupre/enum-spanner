@@ -2,10 +2,20 @@ import compile.build_nfa as build_nfa
 from compile.grammar import build_ast
 from compile.glushkov import ASTtoNFA
 
+from enum_mappings import enum_mappings, naive_enum_mappings
+from mapping import print_mapping
 
-tree = build_ast('a*ba*')
+
+tree = build_ast('(.*b)?(?P<block_a>aa*)(b.*)?(?P<block_b>bb*)(a.*)?')
 print(tree.pretty())
-ASTtoNFA().transform(tree).render('test')
+automata = ASTtoNFA().transform(tree)
+automata.render('test')
+
+
+document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
+
+for mapping in enum_mappings(automata, document):
+    print_mapping(document, mapping)
 
 
 #  import examples

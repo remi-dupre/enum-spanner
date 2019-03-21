@@ -21,9 +21,11 @@ GRAMMAR = '''
                | expression "|" expression                  -> union
                | expression "*"                             -> star
                | expression "?"                             -> optional
+               | "(?P<" NAME ">" expression ")"             -> named_group
                | "(" expression ")"
 
     %import common.LETTER
+    %import common.CNAME -> NAME
 '''
 
 # Build the AST, given an input regexp

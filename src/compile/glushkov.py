@@ -1,6 +1,7 @@
 from lark import Transformer
 
 import atoms
+from mapping import Variable
 from va import VA
 
 
@@ -55,6 +56,26 @@ class ASTtoNFA(Transformer):
         char = str(sub[0])
         atom = self.register_atom(atoms.Char(char))
         return {atom}, set(), {atom}, False
+
+    def named_group(self, sub):
+        name, (P, D, F, G) = sub
+
+        variable = Variable(str(name))
+        open_id = self.register_atom(variable.marker_open())
+        close_id = self.register_atom(variable.marker_close())
+
+        nP = {open_id}
+        nD = (D
+              | {(open_id, target) for target in P}
+              | {(source, close_id) for source in F})
+        nF = {close_id}
+        nG = False
+
+        if G:
+            nD.add((open_id, close_id))
+
+        return nP, nD, nF, nG
+
 
     def optional(self, sub):
         P, D, F, _ = sub[0]
