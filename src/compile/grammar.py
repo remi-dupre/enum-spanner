@@ -5,14 +5,15 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 GRAMMAR = '''
-    start:                                                  -> empty
+    start: empty
          | expression
 
-    ?charclass: charclass charclass
-              | LETTER "-" LETTER                           -> range
+    empty:
+
+    ?charclass: LETTER "-" LETTER                           -> range
 
     ?atom: LETTER                                           -> letter
-        | "[" charclass "]"                                 -> charclass
+        | "[" charclass* "]"                                -> charclass
         | "."                                               -> wildcard
 
     ?expression: atom
@@ -20,7 +21,7 @@ GRAMMAR = '''
                | expression "|" expression                  -> union
                | expression "*"                             -> star
                | expression "?"                             -> optional
-               | "(" expression ")"                         -> block
+               | "(" expression ")"
 
     %import common.LETTER
 '''
