@@ -27,4 +27,4 @@ GRAMMAR = '''
 '''
 
 # Build the AST, given an input regexp
-build_ast = Lark(GRAMMAR, parser='lalr', debug=True).parse
+build_ast = Lark(GRAMMAR, parser='lalr', debug=False).parse

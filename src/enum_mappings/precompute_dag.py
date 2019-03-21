@@ -29,7 +29,7 @@ def product_dag(va: VA, text: str) -> DAG:
                 id_t = f'q{t}', t_i
                 label = a, t_i
                 dag.adj[id_s].append((label, id_t))
-            elif a in ['*', t_a]:
+            elif a.match(t_a):
                 id_t = f'q{t}', t_i + 1
                 label = None, t_i
                 dag.adj[id_s].append((label, id_t))

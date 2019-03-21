@@ -1,5 +1,6 @@
 from lark import Transformer
 
+import atoms
 from va import VA
 
 
@@ -8,22 +9,22 @@ class ASTtoNFA(Transformer):
         # Each atom of the expression is expressed with a unique id, atom[id]
         # is the character class actually matched by the atom
         self.nb_atoms = 0
-        self.atom = dict()
+        self.atoms = dict()
 
         super().__init__(*args, **kwargs)
 
-    def register_atom(self, charclass):
+    def register_atom(self, atom):
         self.nb_atoms += 1
         atom_id = self.nb_atoms
-        self.atom[atom_id] = charclass
+        self.atoms[atom_id] = atom
         return atom_id
 
     def start(self, sub):
         P, D, F, G = sub[0]
 
         transitions = (
-            [(source, self.atom[target], target) for source, target in D]
-            + [(0, self.atom[target], target) for target in P])
+            [(source, self.atoms[target], target) for source, target in D]
+            + [(0, self.atoms[target], target) for target in P])
         finals = F if not G else F | {0}
 
         return VA(self.nb_atoms + 1, transitions, finals)
@@ -43,20 +44,26 @@ class ASTtoNFA(Transformer):
 
         return P, D, F, G
 
+    def charclass(self, sub):
+        atom = self.register_atom(atoms.CharClass(sub))
+        return {atom}, set(), {atom}, False
+
     def empty(self, sub):
         return set(), set(), set(), True
 
     def letter(self, sub):
         char = str(sub[0])
-        atom = self.register_atom(char)
+        atom = self.register_atom(atoms.Char(char))
         return {atom}, set(), {atom}, False
 
     def optional(self, sub):
         P, D, F, _ = sub[0]
         return P, D, F, True
 
+    def range(self, sub):
+        return tuple(map(str, sub))
+
     def star(self, sub):
-        print(sub)
         P, D, F, _ = sub[0]
 
         for suffix in P:
@@ -64,3 +71,18 @@ class ASTtoNFA(Transformer):
                 D.add((prefix, suffix))
 
         return P, D, F, True
+
+    def union(self, sub):
+        (lP, lD, lF, lG), (rP, rD, rF, rG) = sub
+
+        P = lP | rP
+        F = lF | rF
+        D = lD | rD
+        G = lG or rG
+
+        return P, D, F, G
+
+
+    def wildcard(self, sub):
+        atom = self.register_atom(atoms.Wildcard())
+        return {atom}, set(), {atom}, False

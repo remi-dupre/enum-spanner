@@ -17,6 +17,7 @@ def has_outgoing_epsilon(dag, s):
 
 def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
     Sm = set(Sm)
+    Sp = set(Sp)
     path_set = {vertex: set() for vertex in gamma}
     queue = gamma.copy()
 
@@ -36,8 +37,7 @@ def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
                 elif path_set[target] != new_ps:
                     path_set[target] = None
 
-    Sp = set(Sp)
-    return [vertex for vertex, ps in path_set.items() if ps == Sp]
+    return [vertex for vertex, ps in path_set.items() if len(ps) == len(Sp)]
 
 
 def follow_epsilons(dag: DAG, gamma: list):

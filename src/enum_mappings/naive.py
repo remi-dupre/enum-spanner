@@ -17,5 +17,5 @@ def naive_enum_mappings(va: VA, text: str):
                 new_assignation = assignation.copy()
                 new_assignation.append((label, curr_char))
                 heap.append((target, curr_char, new_assignation))
-            elif curr_char < len(text) and label in ['*', text[curr_char]]:
+            elif curr_char < len(text) and label.match(text[curr_char]):
                 heap.append((target, curr_char + 1, assignation))
