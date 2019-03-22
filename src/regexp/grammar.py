@@ -1,14 +1,12 @@
 from functools import lru_cache
 from lark import Lark, Transformer, Tree
 
-import benchmark
-
 
 SPECIAL_CHARS = ['/', '(', ')', '[', ']', '\\', '|', '*', '+', '?', '.']
 SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in SPECIAL_CHARS)
 
 CLASS_SPECIAL_CHARS = ['/', '^', '[', ']', '\\', '-']
-CLASS_SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in SPECIAL_CHARS)
+CLASS_SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in CLASS_SPECIAL_CHARS)
 
 GRAMMAR = f'''
     regexp: union
@@ -43,7 +41,7 @@ GRAMMAR = f'''
 
     // Characters that don't need to be escaped
     normal_char: /[^{SPECIAL_CHARS_ESCAPED}]/
-    class_normal_char: /[^(?!-){CLASS_SPECIAL_CHARS_ESCAPED}](?!-)/
+    class_normal_char: /(?!-)[^{CLASS_SPECIAL_CHARS_ESCAPED}](?!-)/
 
     // An escaped char, can have various interpretations
     escaped_char: "\\\\" /./
@@ -64,16 +62,13 @@ GRAMMAR = f'''
 '''
 
 
-# Build the AST, given an input regexp
-parser = Lark(GRAMMAR, parser='lalr', start='regexp').parse
-
 @lru_cache(10)
 def parser_for(start: str):
     return Lark(GRAMMAR, parser='lalr', start=start)
 
-@benchmark.track
 def parse_from(start: str, regexp: str):
     return parser_for(start).parse(regexp)
+
 
 # May be common and easily added:
 #  - quotes (\Q ... \E)
@@ -118,5 +113,9 @@ class RewriteSpecials(Transformer):
         return Tree('class_escaped_char', subtree)
 
 
+# Build the AST, given an input regexp
+parser = Lark(GRAMMAR, parser='lalr', debug=True, start='regexp').parse
+
 def build_ast(regexp: str):
-    return RewriteSpecials().transform(parser(regexp))
+    ret = RewriteSpecials().transform(parser(regexp))
+    return ret
