@@ -1,4 +1,4 @@
-colorama
 graphviz
 pytest
 numpy
+termcolor
