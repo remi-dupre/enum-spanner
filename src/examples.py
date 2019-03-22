@@ -2,10 +2,10 @@ import regexp
 
 
 # Match maximal blocks of a's
-example_1 = regexp.compile('^(.*[^a])?(?P<block_a>aa*)([^a].*)?$')
+example_1 = regexp.compile('^(.*[^a])?(?P<block_a>a+)([^a].*)?$')
 
 # Match all email address delimited with spaces
-example_2 = regexp.compile('\\w*@\\w*')
+example_2 = regexp.compile('\\w+@\\w+')
 
 # Enumerate all subword
 example_3 = regexp.compile('.*')
@@ -13,10 +13,10 @@ example_3 = regexp.compile('.*')
 # Enumerate all pairs of a non-empty block of a's followed by a non-empty block
 # of b's
 example_4 = regexp.compile(
-    '^(.*[^a])?(?P<block_a>aa*)([^a].*[^b]|[^ab])?(?P<block_b>bb*)([^b].*)?$')
+    '^(.*[^a])?(?P<block_a>a+)([^a].*[^b]|[^ab])?(?P<block_b>b+)([^b].*)?$')
 
 # Match email addresses in the form [a.]*@a*.a*
-example_5 = regexp.compile('\\w\\w*(\\.\\w\\w*)*@\\w\\w*\\.\\w\\w*')
+example_5 = regexp.compile('\\w+(\\.\\w+)*@\\w+\\.\\w+')
 
 
 INSTANCES = [

@@ -23,6 +23,7 @@ GRAMMAR = f'''
 
     // Expression with no union and no concatenation
     ?simple: elementary
+           | elementary "+"                                 -> plus
            | elementary "*"                                 -> star
            | elementary "?"                                 -> optional
 

@@ -95,6 +95,15 @@ class ASTtoNFA(Transformer):
         P, D, F, _ = sub[0]
         return P, D, F, True
 
+    def plus(self, sub):
+        P, D, F, G = sub[0]
+
+        for suffix in P:
+            for prefix in F:
+                D.add((prefix, suffix))
+
+        return P, D, F, G
+
     def range(self, sub):
         return tuple(map(str, sub))
 
