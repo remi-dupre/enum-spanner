@@ -1,5 +1,6 @@
 import regexp
 
+
 # Match maximal blocks of a's
 example_1 = regexp.compile('^(.*[^a])?(?P<block_a>aa*)([^a].*)?$')
 
@@ -11,7 +12,8 @@ example_3 = regexp.compile('.*')
 
 # Enumerate all pairs of a non-empty block of a's followed by a non-empty block
 # of b's
-example_4 = regexp.compile('^(.*[^a])?(?P<block_a>aa*)([^a].*[^b]|[^ab])?(?P<block_b>bb*)([^b].*)?$')
+example_4 = regexp.compile(
+    '^(.*[^a])?(?P<block_a>aa*)([^a].*[^b]|[^ab])?(?P<block_b>bb*)([^b].*)?$')
 
 # Match email addresses in the form [a.]*@a*.a*
 example_5 = regexp.compile('\\w\\w*(\\.\\w\\w*)*@\\w\\w*\\.\\w\\w*')

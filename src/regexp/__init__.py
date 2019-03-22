@@ -19,11 +19,14 @@ def compile(regexp: str) -> VA:
     else:
         regexp = regexp + ').*'
 
-    print('lel', regexp)
     tree = build_ast(regexp)
     return ASTtoNFA().transform(tree)
 
 def match(regexp: str, document) -> VA:
     from enum_mappings import enum_mappings
     automata = compile(regexp)
-    return next(enum_mappings(automata, document))
+
+    try:
+        return next(enum_mappings(automata, document))
+    except StopIteration:
+        return None

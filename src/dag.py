@@ -2,6 +2,10 @@ from functools import lru_cache
 from graphviz import Digraph
 
 
+class EmptyLangage(Exception):
+    pass
+
+
 class DAG:
 
     def __init__(self):
@@ -95,11 +99,16 @@ class DAG:
         the function fails with no predicate on the resulting DAG.
         '''
         accessible = list(self.run_from(self.initial))
-        assert self.final in accessible
-        self.trim(accessible)
 
+        if self.final not in accessible:
+            raise EmptyLangage()
+
+        self.trim(accessible)
         coaccessible = list(self.corun_from(self.final))
-        assert self.initial in coaccessible
+
+        if self.initial not in coaccessible:
+            raise EmptyLangage()
+
         self.trim(coaccessible)
 
     def render(self, name):

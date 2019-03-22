@@ -2,8 +2,7 @@
 import sys
 
 import regexp
-from enum_mappings import enum_mappings
-from mapping import print_mapping
+from enum_mappings import enum_matches
 
 
 if len(sys.argv) < 2:
@@ -13,8 +12,10 @@ if len(sys.argv) < 2:
 automata = regexp.compile(sys.argv[1])
 automata.render('automata')
 
-with open(sys.argv[2], 'r') as f:
-    document = f.read()
+document = sys.argv[2]
+
+#  with open(sys.argv[2], 'r') as f:
+#      document = f.read()
 
 #  automata = regexp.compile('(.*b)?(?P<block_a>aa*)(b.*)?(?P<block_b>bb*)(a.*)?')
 #  automata.render('test')
@@ -22,11 +23,11 @@ with open(sys.argv[2], 'r') as f:
 #
 #  document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
 
-for i, mapping in enumerate(enum_matchings(automata, document)):
+for i, mapping in enumerate(enum_matches(automata, document)):
     print(f'{i}:', mapping)
 
 
-print('regexp.match:', regexp.match(sys.argv[1], document))
+print('regexp.match:', bool(regexp.match(sys.argv[1], document)))
 
 #  import examples
 #  from benchmark import bench, random_word, print_tracking
