@@ -49,6 +49,31 @@ class CharClass:
         ret = ''
 
         for l, r in self.intervals:
-            ret += f'{l}-{r}'
+            if l != r:
+                ret += f'{l}-{r}'
+            else:
+                ret += str(l)
 
         return f'[{ret}]'
+
+
+class CharClassComplement:
+    '''
+    Match unions of intervals of characters.
+    '''
+    def __init__(self, intervals: list):
+        self.intervals = intervals
+
+    def match(self, char):
+        return not any(ord(l) <= ord(char) <= ord(r) for l, r in self.intervals)
+
+    def __str__(self):
+        ret = ''
+
+        for l, r in self.intervals:
+            if l != r:
+                ret += f'{l}-{r}'
+            else:
+                ret += str(l)
+
+        return f'[^{ret}]'

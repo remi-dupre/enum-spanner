@@ -20,7 +20,7 @@ class ASTtoNFA(Transformer):
         self.atoms[atom_id] = atom
         return atom_id
 
-    def start(self, sub):
+    def regexp(self, sub):
         P, D, F, G = sub[0]
 
         transitions = (
@@ -31,6 +31,7 @@ class ASTtoNFA(Transformer):
         return VA(self.nb_atoms + 1, transitions, finals)
 
     def concatenation(self, sub):
+        print(sub)
         (lP, lD, lF, lG), (rP, rD, rF, rG) = sub
 
         P = lP if not lG else lP | rP
@@ -49,10 +50,20 @@ class ASTtoNFA(Transformer):
         atom = self.register_atom(atoms.CharClass(sub))
         return {atom}, set(), {atom}, False
 
+    def charclass_complement(self, sub):
+        atom = self.register_atom(atoms.CharClassComplement(sub))
+        return {atom}, set(), {atom}, False
+
+    def class_escaped_char(self, sub):
+        return str(sub[0]), str(sub[0])
+
+    def class_normal_char(self, sub):
+        return str(sub[0]), str(sub[0])
+
     def empty(self, sub):
         return set(), set(), set(), True
 
-    def letter(self, sub):
+    def escaped_char(self, sub):
         char = str(sub[0])
         atom = self.register_atom(atoms.Char(char))
         return {atom}, set(), {atom}, False
@@ -76,6 +87,10 @@ class ASTtoNFA(Transformer):
 
         return nP, nD, nF, nG
 
+    def normal_char(self, sub):
+        char = str(sub[0])
+        atom = self.register_atom(atoms.Char(char))
+        return {atom}, set(), {atom}, False
 
     def optional(self, sub):
         P, D, F, _ = sub[0]
@@ -102,7 +117,6 @@ class ASTtoNFA(Transformer):
         G = lG or rG
 
         return P, D, F, G
-
 
     def wildcard(self, sub):
         atom = self.register_atom(atoms.Wildcard())

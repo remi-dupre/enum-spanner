@@ -1,18 +1,28 @@
-import compile.build_nfa as build_nfa
-from compile.grammar import build_ast
-from compile.glushkov import ASTtoNFA
+#!/usr/bin/python3
+import sys
 
-from enum_mappings import enum_mappings, naive_enum_mappings
+import regexp
+from enum_mappings import enum_mappings
 from mapping import print_mapping
 
 
-tree = build_ast('(.*b)?(?P<block_a>aa*)(b.*)?(?P<block_b>bb*)(a.*)?')
-print(tree.pretty())
-automata = ASTtoNFA().transform(tree)
-automata.render('test')
+if len(sys.argv) < 2:
+    print(f'Usage: {sys.argv[0]} `regexp` `file`')
+    sys.exit(1)
 
+automata = regexp.compile(sys.argv[1])
+automata.render('automata')
 
-document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
+with open(sys.argv[2], 'r') as f:
+    document = f.read()
+
+print(sys.argv[1])
+
+#  automata = regexp.compile('(.*b)?(?P<block_a>aa*)(b.*)?(?P<block_b>bb*)(a.*)?')
+#  automata.render('test')
+#
+#
+#  document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
 
 for mapping in enum_mappings(automata, document):
     print_mapping(document, mapping)

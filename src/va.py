@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 from graphviz import Digraph
 
@@ -71,6 +72,6 @@ class VA:
         dot.edge(f'before_q{self.initial}', f'q{self.initial}')
 
         for source, label, target in self.transitions:
-            dot.edge(f'q{source}', f'q{target}', f' {label} ')
+            dot.edge(f'q{source}', f'q{target}', re.escape(f' {label} '))
 
         dot.render()
