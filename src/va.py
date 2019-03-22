@@ -38,6 +38,7 @@ class VA:
         return ret
 
     @property
+    @lru_cache(1)
     def variables(self):
         '''
         Get the list of variables used in the automata

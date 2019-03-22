@@ -31,7 +31,6 @@ class ASTtoNFA(Transformer):
         return VA(self.nb_atoms + 1, transitions, finals)
 
     def concatenation(self, sub):
-        print(sub)
         (lP, lD, lF, lG), (rP, rD, rF, rG) = sub
 
         P = lP if not lG else lP | rP

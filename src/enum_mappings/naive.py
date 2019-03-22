@@ -1,4 +1,4 @@
-from mapping import Variable, is_valid_mapping
+from mapping import Variable, is_valid_mapping, match_of_mapping
 from va import VA
 
 
@@ -10,7 +10,7 @@ def naive_enum_mappings(va: VA, text: str):
         state, curr_char, assignation = heap.pop()
 
         if curr_char == len(text) and is_valid_mapping(va.variables, assignation):
-            yield assignation
+            yield match_of_mapping(text, va.variables, assignation)
 
         for label, target in va.adj[state]:
             if isinstance(label, Variable.Marker):

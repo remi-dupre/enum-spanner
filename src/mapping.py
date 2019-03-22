@@ -2,6 +2,8 @@ import random
 from colorama import Fore, Style
 from enum import Enum
 
+from match import Match
+
 
 class Variable:
 
@@ -90,6 +92,22 @@ def is_valid_mapping(variables, mapping):
     return True
 
 
+def match_of_mapping(document, variables, mapping):
+    '''
+    Converts a mapping into a match.
+    '''
+    group_spans = {variable.name: [None, None] for variable in variables}
+
+    for marker, index in mapping:
+        if marker.type == Variable.Marker.Type.OPEN:
+            group_spans[marker.variable.name][0] = index
+        if marker.type == Variable.Marker.Type.CLOSE:
+            group_spans[marker.variable.name][1] = index
+
+    span = group_spans.pop('match')
+    return Match(document, span, group_spans)
+
+
 def print_mapping(document: str, mapping: list):
     symbols = {i : [] for i in range(len(document) + 1)}
 
@@ -100,7 +118,7 @@ def print_mapping(document: str, mapping: list):
     for i in range(len(document) + 1):
         for marker in symbols[i]:
             if marker.type == Variable.Marker.Type.OPEN:
-                print(f'{Style.DIM}|{marker}|{Style.BRIGHT}{Fore.RED}', end='')
+                print(f'{Style.RESET_ALL}{Style.DIM}|{marker}|{Style.BRIGHT}{Fore.RED}', end='')
             else:
                 print(f'{Style.RESET_ALL}{Style.DIM}{Fore.WHITE}|{marker}|{Style.RESET_ALL}', end='')
 

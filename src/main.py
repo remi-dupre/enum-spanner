@@ -16,17 +16,17 @@ automata.render('automata')
 with open(sys.argv[2], 'r') as f:
     document = f.read()
 
-print(sys.argv[1])
-
 #  automata = regexp.compile('(.*b)?(?P<block_a>aa*)(b.*)?(?P<block_b>bb*)(a.*)?')
 #  automata.render('test')
 #
 #
 #  document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
 
-for mapping in enum_mappings(automata, document):
-    print_mapping(document, mapping)
+for i, mapping in enumerate(enum_mappings(automata, document)):
+    print(f'{i}:', mapping)
 
+
+print('regexp.match:', regexp.match(sys.argv[1], document))
 
 #  import examples
 #  from benchmark import bench, random_word, print_tracking
