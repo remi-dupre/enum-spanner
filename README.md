@@ -12,22 +12,33 @@ Usage
 -----
 
 ```bash
-# Execute current main task (still has a versatile definition)
-python3 src/main.py
+# Display all occurences of a pattern in a file
+src/main.py [pattern] [file]
+cat [file] | src/main.py [pattern]
+
+# This example will match 'aa@aa', 'aa@a', 'a@aa', 'a@a'
+echo "aa@aa" | src/main.py ".+@.+"
 
 # Run unit tests
 make tests
 ```
 
-Running the main task will currently output the list of mappings processed
-other the examples, and render the DAGs that were used in *figures/*.
+Displayed matches will correspond to all distincts substrings of the text that
+match the given pattern, if the pattern contains named groups, it will also
+output one match for each possible assignation of the groups.
+
+
+Supported Regular Expression
+----------------------------
+
+All the supported grammar can be found in [grammar.py](src/regexp/grammar.py).
 
 
 Dependencies
 ------------
 
 Dependencies are specified in `requirements.txt`, you can install them manually
-or install a virtualenv:
+or setup a virtualenv:
 
 ```bash
 python -m venv .venv
