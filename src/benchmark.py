@@ -6,6 +6,7 @@ import types
 def random_word(size: int, alphabet: str) -> str:
     return ''.join((random.choice(alphabet) for _ in range(size)))
 
+
 def bench(function, inputs: list):
     for name, document in inputs.items():
         before_init = time.time()
@@ -30,7 +31,9 @@ def bench(function, inputs: list):
         print(f'{name}: init {init_time} seconds, bandwidth {bandwidth} '
               f'match/s over {enum_time} seconds')
 
+
 TRACKING = dict()
+
 
 def track(function):
     '''
@@ -51,8 +54,10 @@ def track(function):
             try:
                 while True:
                     time_begin = time.time()
-                    yield next(ret)
+                    val = next(ret)
                     time_end = time.time()
+
+                    yield val
 
                     TRACKING[function.__name__]['calls'] += 1
                     TRACKING[function.__name__]['time'] += time_end - time_begin
@@ -61,10 +66,9 @@ def track(function):
 
         return generator_wrapper()
 
-
-
     TRACKING[function.__name__] = {'calls': 0, 'time': 0}
     return wrapper
+
 
 def print_tracking():
     for function, logs in TRACKING.items():

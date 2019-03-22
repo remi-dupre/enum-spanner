@@ -59,7 +59,7 @@ class VA:
             assert s in range(self.nb_states)
             assert t in range(self.nb_states)
 
-    def render(self, name):
+    def render(self, name, display=False):
         dot = Digraph(name)
 
         dot.attr('node', shape='point')
@@ -75,4 +75,4 @@ class VA:
         for source, label, target in self.transitions:
             dot.edge(f'q{source}', f'q{target}', re.escape(f' {label} '))
 
-        dot.render()
+        dot.render(view=display)

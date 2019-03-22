@@ -1,3 +1,4 @@
+import benchmark
 from collections import deque
 from termcolor import cprint
 
@@ -14,6 +15,7 @@ class Match:
         begin, end = self.span
         return self.document[begin:end]
 
+    @benchmark.track
     def pretty_print(self):
         symbols = {i : deque() for i in range(len(self.document) + 1)}
 

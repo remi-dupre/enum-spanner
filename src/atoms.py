@@ -59,7 +59,7 @@ class CharClass:
 
 class CharClassComplement:
     '''
-    Match unions of intervals of characters.
+    Match the complement of unions of intervals of characters.
     '''
     def __init__(self, intervals: list):
         self.intervals = intervals

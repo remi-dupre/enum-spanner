@@ -1,6 +1,8 @@
 from functools import lru_cache
 from graphviz import Digraph
 
+import benchmark
+
 
 class EmptyLangage(Exception):
     pass
@@ -92,6 +94,7 @@ class DAG:
 
         self.adj = new_adj
 
+    @benchmark.track
     def remove_useless_nodes(self):
         '''
         Remove nodes that are not accessible or not co-accessible, if the

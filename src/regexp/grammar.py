@@ -1,7 +1,7 @@
-import logging
+from functools import lru_cache
 from lark import Lark, Transformer, Tree
 
-logging.basicConfig(level=logging.DEBUG)
+import benchmark
 
 
 SPECIAL_CHARS = ['/', '(', ')', '[', ']', '\\', '|', '*', '+', '?', '.']
@@ -64,20 +64,28 @@ GRAMMAR = f'''
 '''
 
 
+# Build the AST, given an input regexp
+parser = Lark(GRAMMAR, parser='lalr', start='regexp').parse
+
+@lru_cache(10)
+def parser_for(start: str):
+    return Lark(GRAMMAR, parser='lalr', start=start)
+
+@benchmark.track
 def parse_from(start: str, regexp: str):
-    return Lark(GRAMMAR, parser='lalr', debug=True, start=start).parse(regexp)
+    return parser_for(start).parse(regexp)
 
 # May be common and easily added:
 #  - quotes (\Q ... \E)
 SPECIAL_CHARS_REWRITE = {
-    'n': parse_from('char', '\n'),
-    'r': parse_from('char', '\r'),
-    't': parse_from('char', '\t'),
-    '0': parse_from('char', '\0'),
-    'b': parse_from('char', '\b'),
+    'n': parse_from('atom', '\n'),
+    'r': parse_from('atom', '\r'),
+    't': parse_from('atom', '\t'),
+    '0': parse_from('atom', '\0'),
+    'b': parse_from('atom', '\b'),
     's': parse_from('atom', '[\r\n\t]'),
     'S': parse_from('atom', '[^\r\n\t]'),
-    'd': parse_from('regexp', '[0-9]'),
+    'd': parse_from('atom', '[0-9]'),
     'D': parse_from('atom', '[^0-9]'),
     'w': parse_from('atom', '[a-zA-Z0-9]'),
     'W': parse_from('atom', '[^a-zA-Z0-9_]'),
@@ -110,9 +118,5 @@ class RewriteSpecials(Transformer):
         return Tree('class_escaped_char', subtree)
 
 
-# Build the AST, given an input regexp
-parser = Lark(GRAMMAR, parser='lalr', debug=True, start='regexp').parse
-
 def build_ast(regexp: str):
-    ret = RewriteSpecials().transform(parser(regexp))
-    return ret
+    return RewriteSpecials().transform(parser(regexp))
