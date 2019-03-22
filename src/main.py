@@ -22,7 +22,7 @@ with open(sys.argv[2], 'r') as f:
 #
 #  document = 'aababababababbabbabbabbabbababbababbababbbbbbbaaaa'
 
-for i, mapping in enumerate(enum_mappings(automata, document)):
+for i, mapping in enumerate(enum_matchings(automata, document)):
     print(f'{i}:', mapping)
 
 

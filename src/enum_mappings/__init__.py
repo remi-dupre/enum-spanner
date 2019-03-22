@@ -9,6 +9,8 @@ def enum_mappings(va: VA, text: str):
     dag = product_dag(va, text)
     dag.remove_useless_nodes()
     dag.render('dag')
+    return enum_dag_mappings(dag)
 
-    for mapping in enum_dag_mappings(dag):
+def enum_matches(va: VA, text: str):
+    for mapping in enum_mappings(va, text):
         yield match_of_mapping(text, va.variables, mapping)
