@@ -26,7 +26,7 @@ class Match:
             cprint(''.join(symbols[i]), 'red', attrs=['bold', 'dark'], end='')
 
             if i < len(self.document):
-                if self.span[0] <= i <= self.span[1]:
+                if self.span[0] <= i < self.span[1]:
                     cprint(self.document[i], 'red', attrs=['bold'], end='')
                 else:
                     cprint(self.document[i], end='')

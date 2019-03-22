@@ -16,7 +16,7 @@ example_4 = regexp.compile(
     '^(.*[^a])?(?P<block_a>a+)([^a].*[^b]|[^ab])?(?P<block_b>b+)([^b].*)?$')
 
 # Match email addresses in the form [a.]*@a*.a*
-example_5 = regexp.compile('\\w+(\\.\\w+)*@\\w+\\.\\w+')
+example_5 = regexp.compile('(?P<login>\\w+(\\.\\w+)*)@(?P<server>\\w+\\.\\w+)')
 
 
 INSTANCES = [

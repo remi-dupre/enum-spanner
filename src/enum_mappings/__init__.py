@@ -14,7 +14,6 @@ def enum_mappings(va: VA, text: str):
     except EmptyLangage:
         return iter([])
 
-    dag.render('dag')
     return enum_dag_mappings(dag)
 
 def enum_matches(va: VA, text: str):
