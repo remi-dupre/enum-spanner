@@ -1,4 +1,5 @@
 graphviz
 pytest
+lark-parser
 numpy
 termcolor

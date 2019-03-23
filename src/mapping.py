@@ -1,5 +1,4 @@
 import random
-from colorama import Fore, Style
 from enum import Enum
 
 from match import Match
