@@ -69,6 +69,25 @@ def test_union():
     assert not regexp.match('^foo|bar$', 'foobar')
 
 
+def test_repetition():
+    assert regexp.match('^(ab){5}$', 'ab' * 5)
+    assert not regexp.match('^(ab){5}$', 'ab' * 4)
+    assert not regexp.match('^(ab){5}$', 'ab' * 6)
+
+    assert regexp.match('^(ab){5,}$', 'ab' * 5)
+    assert regexp.match('^(ab){5,}$', 'ab' * 6)
+    assert not regexp.match('^(ab){5,}$', 'ab' * 4)
+
+    assert regexp.match('^(ab){,5}$', 'ab' * 5)
+    assert regexp.match('^(ab){,5}$', 'ab' * 4)
+    assert not regexp.match('^(ab){,5}$', 'ab' * 6)
+
+    assert regexp.match('^(ab){4,5}$', 'ab' * 4)
+    assert regexp.match('^(ab){4,5}$', 'ab' * 5)
+    assert not regexp.match('^(ab){4,5}$', 'ab' * 3)
+    assert not regexp.match('^(ab){4,5}$', 'ab' * 6)
+
+
 def test_begin_token():
     assert regexp.match('^foo', 'foobar')
     assert regexp.match('bar', 'foobar')

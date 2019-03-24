@@ -1,5 +1,6 @@
 # Invalid characters inside a regular expression
-SPECIAL_CHARS = ['/', '(', ')', '[', ']', '\\', '|', '*', '+', '?', '.']
+SPECIAL_CHARS = ['/', '(', ')', '[', ']', '{', '}', '\\', '|', '*', '+', '?',
+                 '.']
 SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in SPECIAL_CHARS)
 
 # Invalid characters inside a class definition
@@ -24,11 +25,17 @@ GRAMMAR = f'''
            | elementary "+"                                 -> plus
            | elementary "*"                                 -> star
            | elementary "?"                                 -> optional
+           | elementary "{{" repeat_bounds "}}"             -> repeat
+
+    repeat_bounds: NUMBER
+                 | empty "," NUMBER
+                 | NUMBER "," empty
+                 | NUMBER "," NUMBER
 
     // An expression that can be considered as one block
     ?elementary: atom
                | "(" union ")"
-               | "(?P<" NAME ">" union  ")"                 -> named_group
+               | "(?P<" CNAME ">" union  ")"                -> named_group
 
     // Match one atomic letter
     ?atom: char
@@ -55,10 +62,11 @@ GRAMMAR = f'''
     ?singleton: class_normal_char
               | class_escaped_char
 
+    %import common.CNAME
     %import common.DIGIT
     %import common.LCASE_LETTER
+    %import common.NUMBER
     %import common.UCASE_LETTER
-    %import common.CNAME -> NAME
 '''
 
 # Equivalent expressions for some shortcut notations for atoms

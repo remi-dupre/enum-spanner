@@ -1,5 +1,5 @@
 from functools import lru_cache
-from lark import Lark, Transformer, Tree
+from lark import Lark, Transformer, Token, Tree
 
 import regexp.grammar as grammar
 
@@ -22,11 +22,11 @@ def parse_from(start: str, regexp: str):
 
 class RewriteSpecials(Transformer):
     '''
-    Rewrite the input AST by replacing all expressions that have an equivalent in the given list:
+    Rewrite the input AST by replacing all expressions that have an equivalent
+    in the given list:
      - grammar.SPECIAL_CHARS_REWRITE
      - grammar.CLASS_SPECIAL_CHARS_REWRITE
     '''
-
     #pylint: disable=no-self-use
     def escaped_char(self, subtree):
         char = str(subtree[0])
@@ -45,6 +45,54 @@ class RewriteSpecials(Transformer):
             return parse_from(non_terminal, equivalent)
 
         return Tree('class_escaped_char', subtree)
+
+    def repeat(self, subtree):
+        sub, bounds = subtree
+
+        if len(bounds.children) == 2:
+            min_occ, max_occ = bounds.children
+
+            if not isinstance(min_occ, Token):
+                assert min_occ.data == 'empty'
+                min_occ = 0
+            else:
+                min_occ = int(min_occ)
+
+            if not isinstance(max_occ, Token):
+                assert max_occ.data == 'empty'
+                max_occ = None
+            else:
+                max_occ = int(max_occ)
+        else:
+            min_occ = max_occ = int(bounds.children[0])
+
+        # Compute separately the case where a star is needed to avoid
+        # unecessary extra states
+        if min_occ == 0 and max_occ is None:
+            return Tree('star', [sub])
+
+        # Add path for the lower bound
+        replacement = Tree('empty', [])
+
+        for i in range(min_occ):
+            if i == min_occ-1 and max_occ is None:
+                # The last item is a plus if there is no upper bound
+                replacement = Tree('concatenation', [replacement,
+                                                     Tree('plus', [sub])])
+            else:
+                replacement = Tree('concatenation', [replacement, sub])
+
+        # Add path to allow the upper bound
+        if max_occ is not None:
+            optionals = Tree('empty', [])
+
+            for _ in range(max_occ - min_occ):
+                optionals = Tree(
+                    'optional', [Tree('concatenation', [sub, optionals])])
+
+            replacement = Tree('concatenation', [replacement, optionals])
+
+        return replacement
 
 
 def parser(regexp: str):
