@@ -1,13 +1,13 @@
-from functools import lru_cache
-from lark import Lark, Transformer, Tree
-
-
+# Invalid characters inside a regular expression
 SPECIAL_CHARS = ['/', '(', ')', '[', ']', '\\', '|', '*', '+', '?', '.']
 SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in SPECIAL_CHARS)
 
+# Invalid characters inside a class definition
 CLASS_SPECIAL_CHARS = ['/', '^', '[', ']', '\\', '-']
 CLASS_SPECIAL_CHARS_ESCAPED = ''.join('\\' + char for char in CLASS_SPECIAL_CHARS)
 
+# May be common and easily added:
+#  - quotes (\Q ... \E)
 GRAMMAR = f'''
     regexp: union
 
@@ -61,61 +61,28 @@ GRAMMAR = f'''
     %import common.CNAME -> NAME
 '''
 
-
-@lru_cache(10)
-def parser_for(start: str):
-    return Lark(GRAMMAR, parser='lalr', start=start)
-
-def parse_from(start: str, regexp: str):
-    return parser_for(start).parse(regexp)
-
-
-# May be common and easily added:
-#  - quotes (\Q ... \E)
+# Equivalent expressions for some shortcut notations for atoms
 SPECIAL_CHARS_REWRITE = {
-    'n': parse_from('atom', '\n'),
-    'r': parse_from('atom', '\r'),
-    't': parse_from('atom', '\t'),
-    '0': parse_from('atom', '\0'),
-    'b': parse_from('atom', '\b'),
-    's': parse_from('atom', '[\r\n\t]'),
-    'S': parse_from('atom', '[^\r\n\t]'),
-    'd': parse_from('atom', '[0-9]'),
-    'D': parse_from('atom', '[^0-9]'),
-    'w': parse_from('atom', '[a-zA-Z0-9]'),
-    'W': parse_from('atom', '[^a-zA-Z0-9_]'),
+    'n': ('atom', '\n'),
+    'r': ('atom', '\r'),
+    't': ('atom', '\t'),
+    '0': ('atom', '\0'),
+    'b': ('atom', '\b'),
+    's': ('atom', '[\r\n\t]'),
+    'S': ('atom', '[^\r\n\t]'),
+    'd': ('atom', '[0-9]'),
+    'D': ('atom', '[^0-9]'),
+    'w': ('atom', '[a-zA-Z0-9]'),
+    'W': ('atom', '[^a-zA-Z0-9_]'),
 }
 
+# Equivalent notations for some atoms inside class definitions
 CLASS_SPECIAL_CHARS_REWRITE = {
-    'n': parse_from('singleton', '\n'),
-    'r': parse_from('singleton', '\r'),
-    't': parse_from('singleton', '\t'),
-    '0': parse_from('singleton', '\0'),
-    'b': parse_from('singleton', '\b'),
-    'd': parse_from('range', '0-9'),
+    'n': ('singleton', '\n'),
+    'r': ('singleton', '\r'),
+    't': ('singleton', '\t'),
+    '0': ('singleton', '\0'),
+    'b': ('singleton', '\b'),
+    'd': ('range', '0-9'),
 }
 
-
-class RewriteSpecials(Transformer):
-    def escaped_char(self, subtree):
-        char = str(subtree[0])
-
-        if char in SPECIAL_CHARS_REWRITE:
-            return SPECIAL_CHARS_REWRITE[char]
-
-        return Tree('escaped_char', subtree)
-
-    def class_escaped_char(self, subtree):
-        char = str(subtree[0])
-        if char in CLASS_SPECIAL_CHARS_REWRITE:
-            return CLASS_SPECIAL_CHARS_REWRITE[char]
-
-        return Tree('class_escaped_char', subtree)
-
-
-# Build the AST, given an input regexp
-parser = Lark(GRAMMAR, parser='lalr', debug=True, start='regexp').parse
-
-def build_ast(regexp: str):
-    ret = RewriteSpecials().transform(parser(regexp))
-    return ret
