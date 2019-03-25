@@ -5,6 +5,9 @@ This tool allows you to find efficiently all matches of a regular expression in
 a string, i.e., find all contiguous substrings of the string that satisfy the
 regular expression (including overlapping substrings).
 
+**The tool is being actively developed and has not been thoroughly tested yet.
+Use at your own risk.**
+
 Installation
 ------------
 
