@@ -27,20 +27,20 @@ Usage
 -----
 
 ```bash
-# Display all occurences of a pattern in a file
-src/main.py [pattern] [file]
+# Display all occurences of a pattern (regexp) in a file
+src/main.py regexp [file]
 cat [file] | src/main.py [pattern]
 
-# This example will match 'aa@aa', 'aa@a', 'a@aa', 'a@a'
+# For instance, this example will match 'aa@aa', 'aa@a', 'a@aa', 'a@a'
 echo "aa@aa" | src/main.py ".+@.+"
 
 # Run unit tests
 make test
 ```
 
-The matches display correspond to all distincts substrings of the text that
-match the given pattern. If the pattern contains named groups, it will also
-output one match for each possible assignation of the groups.
+The matches displayed correspond to all distincts substrings of the text that
+match the given pattern. If the pattern contains named groups, the tool will
+output one match for each possible assignment of the groups.
 
 
 Supported Syntax for Regular Expressions
