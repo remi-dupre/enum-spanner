@@ -8,7 +8,7 @@ from mapping import Variable
 class VA:
 
     def __init__(self, nb_states=0, transitions=None, final=None):
-        # States are identified by integer starting from 0
+        # States are identified by integers starting from 0
         self.initial = 0
         self.nb_states = nb_states
 
@@ -26,7 +26,7 @@ class VA:
     def adj(self):
         '''
         Get the adjacency list of the automata, this property is cached for
-        performance purpose.
+        performance reasons.
 
         Beware of not changing the structure of the automata after calling it.
         '''

@@ -27,18 +27,18 @@ parser.add_argument(
 
 parser.add_argument(
     '-c', '--count', dest='count', action='store_true',
-    help='display the count of match instead')
+    help='display the number of matches instead')
 
 parser.add_argument(
     '-d', '--debug', dest='debug', action='store_true',
-    help='display debug informations')
+    help='display debug information')
 parser.add_argument(
     '--no-debug', dest='debug', action='store_false',
-    help='don\'t display debug informations')
+    help='don\'t display debug information')
 
 parser.add_argument(
     '--show-automata', dest='show_automata', action='store_true',
-    help='display the automata built out of the imput regexp instead')
+    help='display the automata built out of the input regexp instead')
 
 args = parser.parse_args()
 

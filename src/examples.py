@@ -7,7 +7,7 @@ example_1 = regexp.compile('^(.*[^a])?(?P<block_a>a+)([^a].*)?$')
 # Match all email address delimited with spaces
 example_2 = regexp.compile('\\w+@\\w+')
 
-# Enumerate all subword
+# Enumerate all subwords
 example_3 = regexp.compile('.*')
 
 # Enumerate all pairs of a non-empty block of a's followed by a non-empty block

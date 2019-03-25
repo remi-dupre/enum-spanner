@@ -5,7 +5,7 @@ from enum_mappings.precompute_dag import Jump
 
 def has_outgoing_epsilon(dag, s):
     '''
-    Check if an edge in a DAG has an outgoing edge labeled with and
+    Check if an edge in a DAG has an outgoing edge labeled with an
     epsilon-transition.
     '''
     for label, _ in dag.adj[s]:

@@ -69,7 +69,7 @@ GRAMMAR = f'''
     %import common.UCASE_LETTER
 '''
 
-# Equivalent expressions for some shortcut notations for atoms
+# Equivalent expressions for some shortcut notation for atoms
 SPECIAL_CHARS_REWRITE = {
     'n': ('atom', '\n'),
     'r': ('atom', '\r'),
@@ -84,7 +84,7 @@ SPECIAL_CHARS_REWRITE = {
     'W': ('atom', '[^a-zA-Z0-9_]'),
 }
 
-# Equivalent notations for some atoms inside class definitions
+# Equivalent notation for some atoms inside class definitions
 CLASS_SPECIAL_CHARS_REWRITE = {
     'n': ('singleton', '\n'),
     'r': ('singleton', '\r'),

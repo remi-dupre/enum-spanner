@@ -67,7 +67,7 @@ class RewriteSpecials(Transformer):
             min_occ = max_occ = int(bounds.children[0])
 
         # Compute separately the case where a star is needed to avoid
-        # unecessary extra states
+        # unnecessary extra states
         if min_occ == 0 and max_occ is None:
             return Tree('star', [sub])
 

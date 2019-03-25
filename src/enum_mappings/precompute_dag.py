@@ -50,7 +50,7 @@ def product_dag(va: VA, text: str) -> DAG:
 
 class LevelSet:
     '''
-    Represent the partitionning into levels of the DAG.
+    Represent the partitioning into levels of the DAG.
     '''
     def __init__(self, dag: DAG):
         self.dag = dag
@@ -126,7 +126,7 @@ class Jump:
                     self.jl[target] = self.levelset.levels[target]
 
     def __init_rlevel__(self):
-        # TODO: try the linear time version: track in an array of boolean if a
+        # TODO: try the linear time version: track in an array of booleans if a
         # level is already added:
         #  - apply this levelset by levelset
         #  - in a first pass, add a vertex's Jump level if it is not already

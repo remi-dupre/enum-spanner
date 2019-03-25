@@ -68,10 +68,10 @@ class Variable:
 
 def is_valid_mapping(variables, mapping):
     '''
-    Ensures that the given mapping assign each variable to a unique [i, i'>
+    Ensures that the given mapping assigns each variable to a unique [i, i'>
     such that i ≤ i'.
     '''
-    # Dictionnaries containing index for left and right bounds
+    # Dictionaries containing index for left and right bounds
     bounds = {Variable.Marker.Type.OPEN: dict(),
               Variable.Marker.Type.CLOSE: dict()}
 

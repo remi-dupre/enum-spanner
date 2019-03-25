@@ -14,7 +14,7 @@ class DAG:
         # List of vertices in the DAG, all identified by a unique id
         self.vertices = set()
 
-        # Initial and final vertices are defined as extremums by defaults
+        # Initial and final vertices are defined as extrema by default
         self.initial = None
         self.final = None
 
@@ -32,7 +32,7 @@ class DAG:
     def coadj(self):
         '''
         Get the adjacency list of the co-DAG, this property is cached for
-        performance purpose.
+        performance reasons.
 
         Beware of not changing the structure of the DAG after calling it.
         '''
