@@ -45,7 +45,7 @@ cat [file] | src/main.py [pattern]
 echo "aa@aa" | src/main.py ".+@.+"
 
 # Run unit tests
-make tests
+make test
 ```
 
 The matches display correspond to all distincts substrings of the text that
