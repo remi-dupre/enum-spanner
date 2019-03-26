@@ -1,6 +1,8 @@
-import benchmark
-from collections import deque
+from functools import partial
 from termcolor import cprint
+
+import benchmark
+import mapping
 
 
 class Match:
@@ -17,15 +19,31 @@ class Match:
 
     @benchmark.track
     def pretty_print(self):
-        symbols = {i : deque() for i in range(len(self.document) + 1)}
+        symbols = {i : [] for i in range(len(self.document) + 1)}
 
         for group, (l, r) in self.group_spans.items():
-            symbols[l].append(f'[⊢{group}]')
-            symbols[r].appendleft(f'[{group}⊣]')
+            var = mapping.Variable(group)
+            symbols[l].append(var.marker_open())
+            symbols[r].append(var.marker_close())
 
+        def symbol_order(index, symbol):
+            # Order for printing symbols: first close all previoulsly opened
+            # variables in reversed order, then open all of them (and
+            # immediatly close if necessary)
+            l, r = self.group_spans[symbol.variable.name]
+
+            if index > l:
+                return (-l, r, symbol.variable.id, symbol.type)
+
+            return (l, -r, -symbol.variable.id, symbol.type)
+
+        def symbol_print(symbol):
+            return f'[{symbol}]'
 
         for i in range(len(self.document) + 1):
-            cprint(''.join(symbols[i]), 'red', attrs=['bold', 'dark'], end='')
+            symbols[i].sort(key=partial(symbol_order, i))
+            cprint(''.join(map(symbol_print, symbols[i])), 'red',
+                   attrs=['bold', 'dark'], end='')
 
             if i < len(self.document):
                 if self.span[0] <= i < self.span[1]:
