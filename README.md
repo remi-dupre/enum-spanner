@@ -60,7 +60,7 @@ Spanners](https://arxiv.org/abs/1807.09320)*, by [Amarilli](https://a3nm.net/),
 [Bourhis](http://cristal.univ-lille.fr/~bourhis/),
 [Mengel](http://www.cril.univ-artois.fr/~mengel/) and
 [Niewerth](http://www.theoinf.uni-bayreuth.de/en/team/niewerth_matthias/index.php).
-It was presented at the [ICDT'19](http://edbticdt2019.inesc-id.pt/) conference.
+It will be presented at the [ICDT'19](http://edbticdt2019.inesc-id.pt/) conference.
 
 The tool will first compile the regular expression into a nondeterministic
 finite automaton, and then apply an *enumeration algorithm*. Specifically, it
