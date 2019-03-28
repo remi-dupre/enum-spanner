@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import argparse
+import signal
 import sys
 
 import benchmark
@@ -81,6 +82,8 @@ if document[-1] == '\n':
 if args.count:
     print(sum(1 for _ in enum_matches(pattern, document)))
 else:
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
     for count, match in enumerate(enum_matches(pattern, document)):
         if args.display_offset or not args.print:
             print(f'{match.span[0]},{match.span[1]}', end='')
