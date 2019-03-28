@@ -1,6 +1,7 @@
 import numpy
 
 import benchmark
+from collections import deque
 from dag import DAG
 from mapping import Variable
 from va import VA
@@ -64,18 +65,19 @@ class LevelSet:
         # Init index
         self.levels = {}
         self.levels[self.dag.initial] = 0
-        queue = [self.dag.initial]
+        queue = deque([self.dag.initial])
         max_level = 0
 
         while queue:
-            source = queue.pop(0)
-            max_level = self.levels[source]
+            source = queue.popleft()
+            max_level = max(max_level, self.levels[source])
 
             for label, target in self.dag.adj[source]:
                 if target not in self.levels:
                     queue.append(target)
 
-                self.levels[target] = max_level + int(label[0] is None)
+                self.levels[target] = (
+                    self.levels[source] + int(label[0] is None))
 
         # Init reversed index
         self.vertices = [[] for _ in range(max_level + 1)]
