@@ -1,3 +1,4 @@
+from collections import deque
 from functools import lru_cache
 from graphviz import Digraph
 
@@ -56,10 +57,10 @@ class DAG:
         '''
         accessible = {state: False for state in self.vertices}
         accessible[source] = True
-        heap = [source]
+        heap = deque([source])
 
         while heap:
-            s = heap.pop(0)
+            s = heap.popleft()
             yield s
 
             for _, t in self.adj[s]:

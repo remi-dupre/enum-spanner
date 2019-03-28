@@ -112,10 +112,10 @@ class Jump:
 
     def __init_jl__(self):
         self.jl = {self.dag.final: self.levelset.max_level}
-        queue = [self.dag.final]
+        queue = deque([self.dag.final])
 
         while queue:
-            vertex = queue.pop(0)
+            vertex = queue.popleft()
 
             for label, target in self.dag.coadj[vertex]:
                 if not target in self.jl:

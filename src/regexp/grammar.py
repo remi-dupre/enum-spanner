@@ -93,4 +93,3 @@ CLASS_SPECIAL_CHARS_REWRITE = {
     'b': ('singleton', '\b'),
     'd': ('range', '0-9'),
 }
-
