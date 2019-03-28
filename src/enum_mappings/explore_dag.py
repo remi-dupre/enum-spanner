@@ -1,3 +1,5 @@
+from collections import deque
+
 from benchmark import track
 from dag import DAG
 from enum_mappings.precompute_dag import Jump
@@ -19,25 +21,35 @@ def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
     Sm = set(Sm)
     Sp = set(Sp)
     path_set = {vertex: set() for vertex in gamma}
-    queue = gamma.copy()
+    queue = deque(gamma.copy())
 
     while queue:
-        source = queue.pop(0)
+        source = queue.popleft()
 
         for label, target in dag.adj[source]:
             if label[0] is not None and label[0] not in Sm:
+                if target not in path_set:
+                    queue.append(target)
+
                 new_ps = path_set[source].copy()
 
                 if label[0] in Sp:
                     new_ps.add(label[0])
 
-                if target not in path_set:
+                # If the state has a failure anotation, we can skip it
+                if target in path_set and path_set[target] is None:
+                    continue
+
+                # Keep track of the biggest path set for each vertex of the
+                # level, if two path have incomparable path sets, we may
+                # anotate them with a failure anotation (None)
+                if target not in path_set or new_ps >= path_set[target]:
                     path_set[target] = new_ps
-                    queue.append(target)
-                elif path_set[target] != new_ps:
+                elif not (path_set[target] >= new_ps
+                          or path_set[target] <= new_ps):
                     path_set[target] = None
 
-    return [vertex for vertex, ps in path_set.items() if len(ps) == len(Sp)]
+    return [vertex for vertex, ps in path_set.items() if ps == Sp]
 
 
 def follow_epsilons(dag: DAG, gamma: list):
