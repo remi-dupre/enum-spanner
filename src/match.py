@@ -18,13 +18,14 @@ class Match:
         return self.document[begin:end]
 
     @benchmark.track
-    def pretty_print(self):
+    def pretty_print(self, only_matching: bool = False):
         symbols = {i : [] for i in range(len(self.document) + 1)}
 
         for group, (l, r) in self.group_spans.items():
-            var = mapping.Variable(group)
-            symbols[l].append(var.marker_open())
-            symbols[r].append(var.marker_close())
+            if l is not None and r is not None:
+                var = mapping.Variable(group)
+                symbols[l].append(var.marker_open())
+                symbols[r].append(var.marker_close())
 
         def symbol_order(index, symbol):
             # Order for printing symbols: first close all previoulsly opened
@@ -48,7 +49,7 @@ class Match:
             if i < len(self.document):
                 if self.span[0] <= i < self.span[1]:
                     cprint(self.document[i], 'red', attrs=['bold'], end='')
-                else:
+                elif not only_matching:
                     cprint(self.document[i], end='')
 
         cprint('')
