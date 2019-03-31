@@ -1,4 +1,5 @@
 import re
+from collections import deque
 from functools import lru_cache
 from graphviz import Digraph
 
@@ -58,6 +59,28 @@ class VA:
         for s, _, t in self.transitions:
             assert s in range(self.nb_states)
             assert t in range(self.nb_states)
+
+    def reorder_states(self):
+        '''
+        Reorder states in a topological order.
+        '''
+        perm = [None for _ in range(self.nb_states)]
+        curr_index = perm[0] = 0
+        queue = deque([0])
+
+        while queue:
+            source = queue.popleft()
+
+            for _, target in self.adj[source]:
+                if perm[target] is None:
+                    curr_index += 1
+                    perm[target] = curr_index
+                    queue.append(target)
+
+        self.final = [perm[s] for s in self.final]
+        self.transitions = [(perm[source], label, perm[target])
+                            for source, label, target in self.transitions]
+        #  self.adj.cache_clear()
 
     def render(self, name, display=False):
         dot = Digraph(name)

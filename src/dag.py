@@ -115,40 +115,60 @@ class DAG:
 
         self.trim(coaccessible)
 
-    def render(self, name):
-        dot = Digraph(name)
-        dot.attr('node', shape='circle')
+    def render(self, name, display=False, document=None):
+        from enum_mappings.precompute_dag import LevelSet
 
-        def node_id(node):
-            if node in ['vf']:
-                return str(node)
+        # Basic display options
+        dot = Digraph(name, engine='neato',
+                      graph_attr={'splines': 'true', 'esep': '0.6'})
+        dot.attr('node', shape='circle', width='.8', fixedsize='true',
+                 color='white', fontcolor='#777777')
 
-            return ','.join(map(str, node))
+        # Texts for nodes and labels
+        node_str = lambda node: '.'.join(map(str, node)) if node != 'vf' else 'vf'
+        label_str = lambda label: str(label[0]) if label[0] is not None else ''
 
-        def label_str(label):
-            if label[0] is None:
-                return ' ε '
+        # Compute shape of the graph
+        levelset = LevelSet(self)
+        nb_cols = max(int(node[0][1:]) for node in self.vertices if node != 'vf')
 
-            return f' {label[0] } '
+        # Nodes placement
+        for node in self.vertices:
+            pos_x = 2 * int(node[0][1:]) if node != 'vf' else 2 * nb_cols
+            pos_y = -2 * levelset.levels[node]
+            extra_kwargs = {'pos': f'{pos_x},{pos_y}!'}
 
-        #  levels = dict()
-        #
-        #  for node in self.vertices:
-        #      if node != 'vf':
-        #          if node[1] not in levels:
-        #              levels[node[1]] = []
-        #          levels[node[1]].append(node_id(node))
-        #
-        #  for level, nodes in levels.items():
-        #      with dot.subgraph(name=f'cluster_{level}') as c:
-        #          for node in nodes:
-        #              c.node(node)
+            if node == self.final:
+                extra_kwargs.update({
+                    'color': '#777777',
+                    'shape': 'doublecircle'})
 
-        for s in self.vertices:
-            for label, t in self.adj[s]:
-                dot.edge(node_id(s), node_id(t), label_str(label))
+            dot.node(node_str(node), **extra_kwargs)
 
-        dot.render()
+        # Edges placement
+        for s, label, t in self.edges:
+            style = 'dashed' if label[0] is None else 'solid'
+            label = (f'<<table border="0"><tr><td bgcolor="#FFFFFF">'
+                     f'{label_str(label)}</td></tr></table>>')
+            dot.edge(node_str(s), node_str(t), label, style=style)
+
+        # Display levels and letter being read
+        if document:
+            dot.attr('node', shape='cds', style='filled', width='1',
+                     fixedsize='true', color='#777777', fontcolor='white',
+                     fontsize='20')
+            dot.attr('edge', style='dotted', color='#777777', arrowhead='none')
+
+            for i, letter in enumerate(document):
+                min_x = -1
+                max_x = 2 * nb_cols + 1
+                y = -2 * i - 1
+
+                dot.node(f'left{i}', pos=f'{min_x},{y}!', label=letter)
+                dot.node(f'right{i}', pos=f'{max_x},{y}!', style='invis')
+                dot.edge(f'left{i}', f'right{i}')
+
+        dot.render(view=display)
 
     def __str__(self):
         def label_str(label):
