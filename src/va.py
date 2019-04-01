@@ -98,4 +98,4 @@ class VA:
         for source, label, target in self.transitions:
             dot.edge(f'q{source}', f'q{target}', re.escape(f' {label} '))
 
-        dot.render(view=display)
+        dot.render(f'figures/{name}', view=display)

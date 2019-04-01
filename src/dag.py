@@ -168,7 +168,7 @@ class DAG:
                 dot.node(f'right{i}', pos=f'{max_x},{y}!', style='invis')
                 dot.edge(f'left{i}', f'right{i}')
 
-        dot.render(view=display)
+        dot.render(f'figures/{name}', view=display)
 
     def __str__(self):
         def label_str(label):
