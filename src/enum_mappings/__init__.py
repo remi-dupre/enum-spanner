@@ -25,4 +25,7 @@ def enum_mappings(va: VA, text: str):
 
 def enum_matches(va: VA, text: str):
     for mapping in enum_mappings(va, text):
-        yield match_of_mapping(text, va.variables, mapping)
+        match = match_of_mapping(text, va.variables, mapping)
+
+        if match.span[0] is not None and match.span[1] is not None:
+            yield match
