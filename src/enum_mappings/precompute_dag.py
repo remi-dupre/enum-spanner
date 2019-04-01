@@ -111,21 +111,18 @@ class Jump:
         self.__init_reach__()
 
     def __init_jl__(self):
-        self.jl = {self.dag.final: self.levelset.max_level}
-        queue = deque([self.dag.final])
+        self.jl = {vertex: self.levelset.max_level
+                   for vertex in self.dag.vertices}
 
-        while queue:
-            vertex = queue.popleft()
+        for level_index in range(self.levelset.max_level, -1, -1):
+            level = self.levelset.vertices[level_index]
 
-            for label, target in self.dag.coadj[vertex]:
-                if not target in self.jl:
-                    queue.append(target)
-                    self.jl[target] = self.levelset.max_level
-
-                if label[0] is None:
-                    self.jl[target] = min(self.jl[target], self.jl[vertex])
-                else:
-                    self.jl[target] = self.levelset.levels[target]
+            for vertex in level:
+                for label, target in self.dag.adj[vertex]:
+                    if label[0] is None:
+                        self.jl[vertex] = min(self.jl[target], self.jl[vertex])
+                    else:
+                        self.jl[vertex] = self.levelset.levels[vertex]
 
     def __init_rlevel__(self):
         # TODO: try the linear time version: track in an array of booleans if a
