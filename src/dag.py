@@ -1,5 +1,6 @@
 from collections import deque
 from functools import lru_cache
+from re import escape
 from graphviz import Digraph
 
 import benchmark
@@ -118,9 +119,12 @@ class DAG:
     def render(self, name, display=False, document=None):
         from enum_mappings.precompute_dag import LevelSet
 
+        # Use quicker edge look when there is a big number of edges
+        splines = 'true' if sum(1 for _ in self.edges) < 200 else 'ortho'
+
         # Basic display options
         dot = Digraph(name, engine='neato',
-                      graph_attr={'splines': 'true', 'esep': '0.6'})
+                      graph_attr={'splines': splines, 'esep': '0.6'})
         dot.attr('node', shape='circle', width='.8', fixedsize='true',
                  color='white', fontcolor='#777777')
 
@@ -164,7 +168,8 @@ class DAG:
                 max_x = 2 * nb_cols + 1
                 y = -2 * i - 1
 
-                dot.node(f'left{i}', pos=f'{min_x},{y}!', label=letter)
+                letter_repr = escape(repr(letter)[1:-1])
+                dot.node(f'left{i}', pos=f'{min_x},{y}!', label=letter_repr)
                 dot.node(f'right{i}', pos=f'{max_x},{y}!', style='invis')
                 dot.edge(f'left{i}', f'right{i}')
 

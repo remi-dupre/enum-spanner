@@ -96,6 +96,7 @@ class VA:
         dot.edge(f'before_q{self.initial}', f'q{self.initial}')
 
         for source, label, target in self.transitions:
-            dot.edge(f'q{source}', f'q{target}', re.escape(f' {label} '))
+            label_repr = repr(str(label))[1:-1]
+            dot.edge(f'q{source}', f'q{target}', re.escape(f' {label_repr} '))
 
         dot.render(f'figures/{name}', view=display)
