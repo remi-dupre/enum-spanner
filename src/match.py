@@ -41,12 +41,15 @@ class Match:
         def symbol_print(symbol):
             return f'[{symbol}]'
 
-        for i in range(len(self.document) + 1):
+        display_range = (range(self.span[0], self.span[1] + 1) if only_matching
+                         else range(len(self.document)+1))
+
+        for i in display_range:
             symbols[i].sort(key=partial(symbol_order, i))
             cprint(''.join(map(symbol_print, symbols[i])), 'red',
                    attrs=['bold', 'dark'], end='')
 
-            if i < len(self.document):
+            if i < max(display_range):
                 if self.span[0] <= i < self.span[1]:
                     cprint(self.document[i], 'red', attrs=['bold'], end='')
                 elif not only_matching:
