@@ -42,6 +42,17 @@ The matches displayed correspond to all distincts substrings of the text that
 match the given pattern. If the pattern contains named groups, the tool will
 output one match for each possible assignment of the groups.
 
+### Named groups
+
+You can define named groups as follow: `(?P<group_a>a+)(?P<group_b>b+)`. This
+example will extract any group of a's followed by a group of b's.
+
+The group named `match` has a special behaviour, it can be used to match only
+the part captured by this group. For example:
+
+ - `(?P<match>\w+)@\w+` will enumerate the left parts of any feasible email
+   address
+ - `^.*(?P<match>\w+@\w+).*$` is equivalent to `\w+@\w+`
 
 Supported Syntax for Regular Expressions
 ----------------------------------------

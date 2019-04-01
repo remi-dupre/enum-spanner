@@ -124,7 +124,7 @@ class DAG:
 
         # Basic display options
         dot = Digraph(name, engine='neato',
-                      graph_attr={'splines': splines, 'esep': '0.6'})
+                      graph_attr={'splines': splines, 'esep': '0.1'})
         dot.attr('node', shape='circle', width='.8', fixedsize='true',
                  color='white', fontcolor='#777777')
 
