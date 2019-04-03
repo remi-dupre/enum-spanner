@@ -17,6 +17,20 @@ class Match:
         begin, end = self.span
         return self.document[begin:end]
 
+    def group(self, name):
+        if name == 0:
+            return self.string
+
+        begin, end = self.group_spans[name]
+
+        if begin is None or end is None:
+            return None
+
+        return self.document[begin:end]
+
+    def groups(self):
+        return tuple(self.group(name) for name in self.group_spans)
+
     @benchmark.track
     def pretty_print(self, only_matching: bool = False):
         symbols = {i : [] for i in range(len(self.document) + 1)}

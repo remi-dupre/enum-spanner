@@ -2,7 +2,7 @@ from collections import deque
 import numpy
 
 import benchmark
-from dag import DAG
+from dag import DAG, EmptyLangage
 from mapping import Variable
 from va import VA
 
@@ -47,6 +47,9 @@ def product_dag(va: VA, text: str) -> DAG:
                     stack.append((new_state, new_text_position))
 
                 dag.add_edge(curr_node, transition_label, new_node)
+
+    if dag.final not in dag.vertices:
+        raise EmptyLangage
 
     return dag
 

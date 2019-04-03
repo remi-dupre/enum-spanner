@@ -2,6 +2,7 @@
 import argparse
 import signal
 import sys
+from termcolor import cprint
 
 import benchmark
 import regexp
@@ -20,6 +21,7 @@ parser.set_defaults(count=False)
 parser.set_defaults(debug=True)
 parser.set_defaults(display_offset=False)
 parser.set_defaults(only_matching=False)
+parser.set_defaults(only_groups=False)
 parser.set_defaults(print=True)
 parser.set_defaults(show_automata=False)
 parser.set_defaults(show_graph=False)
@@ -50,6 +52,10 @@ parser.add_argument(
          'each such part on a separate output line.')
 
 parser.add_argument(
+    '-O', '--only-groups', dest='only_groups', action='store_true',
+    help='Print only the matched (non-empty) groups')
+
+parser.add_argument(
     '-p', '--no-print', dest='print', action='store_false',
     help='Prevent the display of a substring for each match.')
 
@@ -62,7 +68,7 @@ parser.add_argument(
     help='Display the automata built out of the input regexp.')
 
 parser.add_argument(
-    '--show-graph', dest='show_graph', action='store_true',
+    '--show-dag', '--show-graph', dest='show_graph', action='store_true',
     help='Display the dag built out of the input regexp.')
 
 args = parser.parse_args()
@@ -104,7 +110,16 @@ else:
             if args.print:
                 print(': ', end='')
 
-        if args.print:
+        if args.only_groups:
+            for name in match.group_spans:
+                if match.group(name):
+                    print(f'{name}=', end='')
+                    cprint(match.group(name), 'red', attrs=['bold', 'dark'],
+                           end=' ')
+
+            print()
+
+        elif args.print:
             match.pretty_print(args.only_matching)
         else:
             print()
