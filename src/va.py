@@ -22,9 +22,16 @@ class VA:
         # marker
         self.transitions = transitions if transitions is not None else []
 
+    def cache_clear(self):
+        self.get_adj.cache_clear()
+        self.get_variables.cache_clear()
+
     @property
-    @lru_cache(1)
     def adj(self):
+        return self.get_adj()
+
+    @lru_cache(1)
+    def get_adj(self):
         '''
         Get the adjacency list of the automata, this property is cached for
         performance reasons.
@@ -39,8 +46,11 @@ class VA:
         return ret
 
     @property
-    @lru_cache(1)
     def variables(self):
+        return self.get_variables()
+
+    @lru_cache(1)
+    def get_variables(self):
         '''
         Get the list of variables used in the automata
         '''
@@ -80,7 +90,8 @@ class VA:
         self.final = [perm[s] for s in self.final]
         self.transitions = [(perm[source], label, perm[target])
                             for source, label, target in self.transitions]
-        #  self.adj.cache_clear()
+
+        self.cache_clear()
 
     def render(self, name, display=False):
         dot = Digraph(name)

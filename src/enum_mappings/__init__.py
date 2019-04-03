@@ -10,9 +10,8 @@ def compile_matches(va: VA, text: str) -> DAG:
     '''
     Compile the list of matches of a va over a text into a DAG.
     '''
-    va.reorder_states()
     dag = product_dag(va, text)
-    dag.remove_useless_nodes()
+    dag.remove_useless_nodes(check_accessible=False)
     return dag
 
 def enum_mappings(va: VA, text: str):

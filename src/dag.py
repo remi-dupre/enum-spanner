@@ -24,10 +24,14 @@ class DAG:
         # transition (None, target) for each source vertex
         self.adj = dict()
 
+    # TODO: clear caches
     def add_vertex(self, node_id):
-        assert node_id not in self.vertices
         self.vertices.add(node_id)
         self.adj[node_id] = list()
+
+    # TODO: clear caches
+    def add_edge(self, source, label, target):
+        self.adj[source].append((label, target))
 
     @property
     @lru_cache(1)
@@ -97,24 +101,27 @@ class DAG:
         self.adj = new_adj
 
     @benchmark.track
-    def remove_useless_nodes(self):
+    def remove_useless_nodes(self, check_accessible=True, check_coaccessible=True):
         '''
         Remove nodes that are not accessible or not co-accessible, if the
         initial state is not coaccessible or the final state is not accessible,
         the function fails with no predicate on the resulting DAG.
         '''
-        accessible = list(self.run_from(self.initial))
+        if check_accessible:
+            accessible = list(self.run_from(self.initial))
 
-        if self.final not in accessible:
-            raise EmptyLangage()
+            if self.final not in accessible:
+                raise EmptyLangage()
 
-        self.trim(accessible)
-        coaccessible = list(self.corun_from(self.final))
+            self.trim(accessible)
 
-        if self.initial not in coaccessible:
-            raise EmptyLangage()
+        if check_coaccessible:
+            coaccessible = list(self.corun_from(self.final))
 
-        self.trim(coaccessible)
+            if self.initial not in coaccessible:
+                raise EmptyLangage()
+
+            self.trim(coaccessible)
 
     def render(self, name, display=False, document=None):
         from enum_mappings.precompute_dag import LevelSet

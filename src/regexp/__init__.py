@@ -34,7 +34,9 @@ def compile(regexp: str) -> VA:
         regexp = regexp + '.*'
 
     tree = parser(regexp)
-    return ASTtoNFA().transform(tree)
+    automata = ASTtoNFA().transform(tree)
+    automata.reorder_states()
+    return automata
 
 
 def match(regexp: str, document) -> VA:

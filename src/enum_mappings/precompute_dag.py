@@ -1,7 +1,7 @@
+from collections import deque
 import numpy
 
 import benchmark
-from collections import deque
 from dag import DAG
 from mapping import Variable
 from va import VA
@@ -10,41 +10,43 @@ from va import VA
 @benchmark.track
 def product_dag(va: VA, text: str) -> DAG:
     dag = DAG()
-    dag.add_vertex('vf')
-    dag.add_vertex(('q0', 0))
-    dag.initial = 'q0', 0
+    dag.add_vertex((f'q{va.initial}', 0))
+    dag.initial = f'q{va.initial}', 0
     dag.final = 'vf'
 
-    for s in range(va.nb_states):
-        for i in range(len(text) + 1):
-            state_id = f'q{s}', i
+    stack = [(va.initial, 0)]
 
-            if state_id not in dag.vertices:
-                dag.add_vertex(state_id)
+    while stack:
+        va_state, text_position = stack.pop()
+        curr_node = f'q{va_state}', text_position
 
-    for s, a, t in va.transitions:
-        for t_i, t_a in enumerate(text):
-            id_s = f'q{s}', t_i
+        # Add an edge toward final state if necessary
+        if va_state in va.final and text_position == len(text):
+            dag.add_vertex('vf')
+            dag.add_edge(curr_node, (None, text_position), 'vf')
 
-            if isinstance(a, Variable.Marker):
-                id_t = f'q{t}', t_i
-                label = a, t_i
-                dag.adj[id_s].append((label, id_t))
-            elif a.match(t_a):
-                id_t = f'q{t}', t_i + 1
-                label = None, t_i
-                dag.adj[id_s].append((label, id_t))
+        for atom, new_state in va.adj[va_state]:
+            follow_transition = False
 
-        # Add transitions for the last level
-        if isinstance(a, Variable.Marker):
-            id_s = f'q{s}', len(text)
-            id_t = f'q{t}', len(text)
-            label = a, len(text)
-            dag.adj[id_s].append((label, id_t))
+            # Variable assignments can all be read naively
+            if isinstance(atom, Variable.Marker):
+                follow_transition = True
+                new_text_position = text_position
+                transition_label = atom, text_position
+            # Create epsilon transitions conditionaly on atom matching the text
+            elif text_position < len(text) and  atom.match(text[text_position]):
+                follow_transition = True
+                new_text_position = text_position + 1
+                transition_label = None, text_position
 
-    for s in va.final:
-        id_s = f'q{s}', len(text)
-        dag.adj[id_s].append(((None, len(text)), 'vf'))
+            if follow_transition:
+                new_node = f'q{new_state}', new_text_position
+
+                if new_node not in dag.vertices:
+                    dag.add_vertex(new_node)
+                    stack.append((new_state, new_text_position))
+
+                dag.add_edge(curr_node, transition_label, new_node)
 
     return dag
 
@@ -90,6 +92,7 @@ class LevelSet:
     @property
     def max_level(self):
         return len(self.vertices) - 1
+
 
 @benchmark.track
 class Jump:
