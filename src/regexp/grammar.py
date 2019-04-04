@@ -91,5 +91,7 @@ CLASS_SPECIAL_CHARS_REWRITE = {
     't': ('singleton', '\t'),
     '0': ('singleton', '\0'),
     'b': ('singleton', '\b'),
+    's': ('atom', '[\r\n\t]'),
     'd': ('range', '0-9'),
+    'w': ('atom', '[a-zA-Z0-9]'),
 }

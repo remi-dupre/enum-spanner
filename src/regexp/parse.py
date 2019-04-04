@@ -1,3 +1,4 @@
+#pylint: disable=no-self-use
 from functools import lru_cache
 from lark import Lark, Transformer, Token, Tree
 
@@ -27,15 +28,15 @@ class RewriteSpecials(Transformer):
      - grammar.SPECIAL_CHARS_REWRITE
      - grammar.CLASS_SPECIAL_CHARS_REWRITE
     '''
-    #pylint: disable=no-self-use
-    def escaped_char(self, subtree):
-        char = str(subtree[0])
+    def charclass(self, subtree):
+        children = sum(([child] if child.data != 'charclass' else child.children
+                        for child in subtree), [])
+        return Tree('charclass', children)
 
-        if char in grammar.SPECIAL_CHARS_REWRITE:
-            non_terminal, equivalent = grammar.SPECIAL_CHARS_REWRITE[char]
-            return parse_from(non_terminal, equivalent)
-
-        return Tree('escaped_char', subtree)
+    def charclass_complement(self, subtree):
+        children = sum(([child] if child.data != 'charclass' else child.children
+                        for child in subtree), [])
+        return Tree('charclass_complement', children)
 
     def class_escaped_char(self, subtree):
         char = str(subtree[0])
@@ -45,6 +46,15 @@ class RewriteSpecials(Transformer):
             return parse_from(non_terminal, equivalent)
 
         return Tree('class_escaped_char', subtree)
+
+    def escaped_char(self, subtree):
+        char = str(subtree[0])
+
+        if char in grammar.SPECIAL_CHARS_REWRITE:
+            non_terminal, equivalent = grammar.SPECIAL_CHARS_REWRITE[char]
+            return parse_from(non_terminal, equivalent)
+
+        return Tree('escaped_char', subtree)
 
     def repeat(self, subtree):
         sub, bounds = subtree
@@ -102,4 +112,5 @@ def parser(regexp: str):
     '''
     ast = parse_from('regexp', regexp)
     ast = RewriteSpecials().transform(ast)
+    print(ast.pretty())
     return ast
