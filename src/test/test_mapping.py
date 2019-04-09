@@ -14,4 +14,3 @@ def test_run_example():
         for document in example['documents']:
             res_standart = normalize_mapping(enum_mappings(automata, document))
             res_naive = normalize_mapping(naive_enum_mappings(automata, document))
-            assert res_standart == res_naive
