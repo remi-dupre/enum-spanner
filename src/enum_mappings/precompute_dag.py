@@ -2,6 +2,7 @@ from collections import deque
 import numpy
 
 import benchmark
+from atoms import Atom
 from dag import DAG, EmptyLangage
 from mapping import Variable
 from va import VA
@@ -58,43 +59,20 @@ class LevelSet:
     '''
     Represent the partitioning into levels of the DAG.
     '''
-    def __init__(self, dag: DAG):
-        self.dag = dag
-        self.levels = None        # index vertex -> level
-        self.vertices = None      # index level -> vertex
-        self.vertex_index = None  # index of a vertex in its level
+    def __init__(self, max_level: int):
+        self.max_level = max_level
 
-        self.__init_levels__()
-
-    def __init_levels__(self):
-        # Init index
-        self.levels = {}
-        self.levels[self.dag.initial] = 0
-        queue = deque([self.dag.initial])
-        max_level = 0
-
-        while queue:
-            source = queue.popleft()
-            max_level = max(max_level, self.levels[source])
-
-            for label, target in self.dag.adj[source]:
-                if target not in self.levels:
-                    queue.append(target)
-
-                self.levels[target] = (
-                    self.levels[source] + int(label[0] is None))
-
-        # Init reversed index
-        self.vertices = [[] for _ in range(max_level + 1)]
+        # Index vertex -> level
+        self.levels = dict()
+        # Index level -> vertex
+        self.vertices = {level: [] for level in range(self.max_level + 1)}
+        # Index of a vertex in its level
         self.vertex_index = dict()
 
-        for vertex, level in self.levels.items():
-            self.vertex_index[vertex] = len(self.vertices[level])
-            self.vertices[level].append(vertex)
-
-    @property
-    def max_level(self):
-        return len(self.vertices) - 1
+    def register(self, vertex, level: int):
+        self.levels[vertex] = level
+        self.vertices[level].append(vertex)
+        self.vertex_index[vertex] = len(self.vertices[level]) - 1
 
 
 @benchmark.track
@@ -180,3 +158,105 @@ class Jump:
                     break
 
         return gamma2
+
+
+# ===== 🎜 A WHOLE NEW WOOOOORLD 🎜 =====
+
+
+class IndexedDag:
+    '''
+    TODO
+    '''
+    def __init__(self, va: VA, document: str):
+        self.va = va
+        self.document = document
+
+        self.dag = DAG()
+        self.levelset = LevelSet(len(document) + 1)
+        self.jl = dict()
+        self.rlevel = {level: set() for level in range(len(document) + 2)}
+        self.reach = dict()
+        self.ingoing_assignations = set()
+
+        self.__build_dag__()
+
+    def __build_dag__(self):
+        # Add initial an final vertices
+        self.dag.initial = (self.va.initial, 0)
+        self.dag.final = 'vf'
+        self.dag.add_vertex(self.dag.initial)
+
+        self.levelset.register(self.dag.initial, 0)
+        self.jl[self.dag.initial] = 0
+        self.ingoing_assignations.add(self.dag.initial)
+
+        # Start a level by level run of the DAG
+        for curr_level, curr_letter in enumerate(self.document):
+            self.__follow_assignations__(curr_level)
+            self.__update_reach__(curr_level)
+            self.__read_letter__(curr_level, curr_letter)
+            self.__eliminate_useless__(curr_level)
+
+    def __read_letter__(self, level, letter):
+        for source, _ in self.levelset.vertices[level]:
+            for label, target in self.va.adj[source]:
+                if isinstance(label, Atom) and label.match(letter):
+                    new_node = (target, level + 1)
+
+                    if new_node not in self.dag.vertices:
+                        self.dag.add_vertex(new_node)
+                        self.levelset.register(new_node, level + 1)
+                        self.jl[new_node] = -float('inf')
+
+                    if (source, level) in self.ingoing_assignations:
+                        self.jl[new_node] = level
+                    else:
+                        self.jl[new_node] = max(self.jl[new_node],
+                                                self.jl[source, level])
+
+    def __follow_assignations__(self, level):
+        '''
+        Follow variable assignations inside a level of the DAG.
+        '''
+        ## Register states accessible by variable assignations
+        seen = [False for _ in range(self.va.nb_states)]
+        heap = [state for state, _ in self.levelset.vertices[level]]
+
+        for state in heap:
+            seen[state] = True
+
+        while heap:
+            state = heap.pop()
+
+            for label, target in self.va.adj[state]:
+                if isinstance(label, Variable.Marker):
+                    self.ingoing_assignations.add((target, level))
+
+                    if not seen[target]:
+                        seen[target] = True
+                        heap.append(target)
+
+                        new_node = (target, level)
+                        self.dag.add_vertex(new_node)
+                         # TODO: remove rendondancy in states infos
+                        self.dag.add_edge((state, level),
+                                          (label, level),
+                                          (target, level))
+                        self.levelset.register(new_node, level)
+
+                        # TODO: check this 'strict' jump correctness (has it
+                        # differs slightly from the paper)
+                        if new_node not in self.jl:
+                            self.jl[new_node] = self.jl[state, level]
+                        else:
+                            self.jl = max(self.jl[new_node],
+                                          self.jl[state, level])
+
+    def __eliminate_useless__(self, level):
+        # TODO UPDATE LEVELSET AND RLEVEL AND REACH
+        for vertex in self.levelset.vertices[level]:
+            if vertex not in self.ingoing_assignations:
+                del self.jl[vertex]
+
+    def __update_reach__(self, level):
+        return NotImplemented  # TODO: update reach and rlevel

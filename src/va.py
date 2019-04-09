@@ -3,6 +3,7 @@ from collections import deque
 from functools import lru_cache
 from graphviz import Digraph
 
+from atoms import Atom
 from mapping import Variable
 
 
@@ -24,7 +25,9 @@ class VA:
 
     def cache_clear(self):
         self.get_adj.cache_clear()
+        self.get_coadj.cache_clear()
         self.get_variables.cache_clear()
+        self.has_ingoing_assignation.cache_clear()
 
     @property
     def adj(self):
@@ -35,13 +38,28 @@ class VA:
         '''
         Get the adjacency list of the automata, this property is cached for
         performance reasons.
-
-        Beware of not changing the structure of the automata after calling it.
         '''
         ret = [[] for _ in range(self.nb_states)]
 
         for source, label, target in self.transitions:
             ret[source].append((label, target))
+
+        return ret
+
+    @property
+    def coadj(self):
+        return self.get_coadj()
+
+    @lru_cache(1)
+    def get_coadj(self):
+        '''
+        Get the adjacency list of the automata, this property is cached for
+        performance reasons.
+        '''
+        ret = [[] for _ in range(self.nb_states)]
+
+        for source, label, target in self.transitions:
+            ret[target].append((label, source))
 
         return ret
 
@@ -61,6 +79,17 @@ class VA:
                 ret.add(label.variable)
 
         return list(ret)
+
+    @lru_cache(None)
+    def has_ingoing_assignation(self, state: int) -> bool:
+        '''
+        Check if the given state has an outgoing transition which is labeled
+        '''
+        for label, _ in self.coadj[state]:
+            if isinstance(label, Atom):
+                return True
+
+        return False
 
     def is_valid(self):
         for state in self.final:
