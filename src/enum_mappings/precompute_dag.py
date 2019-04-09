@@ -74,6 +74,19 @@ class LevelSet:
         self.vertices[level].append(vertex)
         self.vertex_index[vertex] = len(self.vertices[level]) - 1
 
+    def remove_from_level(self, level: int, del_vertices: set):
+        new_vertices = []
+
+        for old_vertex in self.vertices[level]:
+            if old_vertex not in del_vertices:
+                new_vertices.append(old_vertex)
+                self.vertex_index[old_vertex] = len(new_vertices) - 1
+            else:
+                del self.vertex_index[old_vertex]
+                del self.levels[old_vertex]
+
+        self.vertices[level] = new_vertices
+
 
 @benchmark.track
 class Jump:
@@ -185,17 +198,19 @@ class IndexedDag:
         self.dag.initial = (self.va.initial, 0)
         self.dag.final = 'vf'
         self.dag.add_vertex(self.dag.initial)
-
         self.levelset.register(self.dag.initial, 0)
         self.jl[self.dag.initial] = 0
         self.ingoing_assignations.add(self.dag.initial)
 
         # Start a level by level run of the DAG
+        self.__follow_assignations__(0)
+        self.__update_rlevel__(0)
+
         for curr_level, curr_letter in enumerate(self.document):
-            self.__follow_assignations__(curr_level)
-            self.__update_reach__(curr_level)
             self.__read_letter__(curr_level, curr_letter)
-            self.__eliminate_useless__(curr_level)
+            self.__follow_assignations__(curr_level + 1)
+            self.__update_rlevel__(curr_level + 1)
+            self.__update_reach__(curr_level, curr_letter)
 
     def __read_letter__(self, level, letter):
         for source, _ in self.levelset.vertices[level]:
@@ -238,11 +253,11 @@ class IndexedDag:
 
                         new_node = (target, level)
                         self.dag.add_vertex(new_node)
+                        self.levelset.register(new_node, level)
                          # TODO: remove rendondancy in states infos
                         self.dag.add_edge((state, level),
                                           (label, level),
                                           (target, level))
-                        self.levelset.register(new_node, level)
 
                         # TODO: check this 'strict' jump correctness (has it
                         # differs slightly from the paper)
@@ -252,11 +267,29 @@ class IndexedDag:
                             self.jl = max(self.jl[new_node],
                                           self.jl[state, level])
 
-    def __eliminate_useless__(self, level):
-        # TODO UPDATE LEVELSET AND RLEVEL AND REACH
-        for vertex in self.levelset.vertices[level]:
-            if vertex not in self.ingoing_assignations:
-                del self.jl[vertex]
+    def __update_rlevel__(self, level):
+        self.rlevel[level] = {self.jl[vertex]
+                              for vertex in self.levelset.vertices[level]}
 
-    def __update_reach__(self, level):
-        return NotImplemented  # TODO: update reach and rlevel
+
+    def __update_reach__(self, level, letter):
+        shape = (len(self.levelset.vertices[level]),
+                 len(self.levelset.vertices[level+1]))
+        self.reach[level, level+1] = numpy.zeros(shape, dtype=bool)
+
+        for source, _ in self.levelset.vertices[level]:
+            for label, target in self.va.adj[source]:
+                if isinstance(label, Atom) and label.match(letter):
+                    id_source = self.levelset.vertex_index[source, level]
+                    id_target = self.levelset.vertex_index[target, level+1]
+                    self.reach[level, level+1][id_source, id_target] = True
+
+        for sublevel in self.rlevel[level+1]:
+            if sublevel >= level:
+                continue
+
+            self.reach[sublevel, level+1] = numpy.dot(
+                self.reach[sublevel, level], self.reach[level, level+1])
+
+        if level not in self.rlevel[level+1]:
+            del self.reach[level, level+1]
