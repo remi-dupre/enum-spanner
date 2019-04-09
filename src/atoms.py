@@ -35,7 +35,7 @@ class Char(Atom):
         return self.char
 
 
-class CharClass:
+class CharClass(Atom):
     '''
     Match unions of intervals of characters.
     '''
@@ -57,7 +57,7 @@ class CharClass:
         return f'[{ret}]'
 
 
-class CharClassComplement:
+class CharClassComplement(Atom):
     '''
     Match the complement of unions of intervals of characters.
     '''

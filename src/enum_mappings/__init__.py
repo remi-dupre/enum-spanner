@@ -1,6 +1,6 @@
 from dag import DAG, EmptyLangage
 from enum_mappings.explore_dag import enum_dag_mappings
-from enum_mappings.precompute_dag import product_dag
+from enum_mappings.precompute_dag import product_dag, IndexedDag
 from enum_mappings.naive import naive_enum_mappings
 from mapping import match_of_mapping
 from va import VA
@@ -15,12 +15,9 @@ def compile_matches(va: VA, text: str) -> DAG:
     return dag
 
 def enum_mappings(va: VA, text: str):
-    try:
-        dag = compile_matches(va, text)
-    except EmptyLangage:
-        return iter([])
-
-    return enum_dag_mappings(dag)
+    dag = IndexedDag(va, text)
+    print(dag.jl)
+    return iter([])
 
 def enum_matches(va: VA, text: str):
     for mapping in enum_mappings(va, text):
