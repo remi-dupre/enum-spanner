@@ -90,12 +90,11 @@ class DAG:
         Trim the graph by only keeping states that belong to the input list of
         states. States are arbitrary reindexed.
         '''
-        new_vertices = set(vertices)
-        self.vertices = vertices.copy()
+        self.vertices = set(vertices)
         new_adj = {v: [] for v in self.vertices}
 
         for source, label, target in self.edges:
-            if target in new_vertices:
+            if source in self.vertices and target in self.vertices:
                 new_adj[source].append((label, target))
 
         self.adj = new_adj

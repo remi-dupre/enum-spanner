@@ -112,5 +112,4 @@ def parser(regexp: str):
     '''
     ast = parse_from('regexp', regexp)
     ast = RewriteSpecials().transform(ast)
-    print(ast.pretty())
     return ast
