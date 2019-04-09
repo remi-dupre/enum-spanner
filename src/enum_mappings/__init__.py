@@ -16,7 +16,15 @@ def compile_matches(va: VA, text: str) -> DAG:
 
 def enum_mappings(va: VA, text: str):
     dag = IndexedDag(va, text)
-    print(dag.jl)
+
+    print(dag.rlevel)
+
+    for source, target in dag.reach:
+        print(f'============ {source} -> {target}')
+        print(f'{source}: {dag.levelset.vertices[source]}')
+        print(f'{target}: {dag.levelset.vertices[target]}')
+        print(dag.reach[source, target])
+
     return iter([])
 
 def enum_matches(va: VA, text: str):
