@@ -29,6 +29,10 @@ class DAG:
         self.vertices.add(node_id)
         self.adj[node_id] = list()
 
+    def remove_vertex(self, node_id):
+        self.vertices.remove(node_id)
+        del self.adj[node_id]
+
     # TODO: clear caches
     def add_edge(self, source, label, target):
         self.adj[source].append((label, target))

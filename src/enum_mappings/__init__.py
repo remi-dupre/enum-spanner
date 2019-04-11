@@ -16,7 +16,10 @@ def compile_matches(va: VA, text: str) -> DAG:
     return NotImplemented
 
 def enum_mappings(va: VA, text: str):
-    dag = IndexedDag(va, text)
+    try:
+        dag = IndexedDag(va, text)
+    except EmptyLangage:
+        return iter([])
 
     #  for source, target in dag.reach:
     #      print(f'============ {source} -> {target}')
