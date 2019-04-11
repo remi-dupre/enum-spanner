@@ -9,7 +9,7 @@ def has_intgoing_epsilon(dag, s):
     Check if an edge in a DAG has an outgoing edge labeled with an
     epsilon-transition.
     '''
-    for label, _ in dag.coadj[s]:
+    for label, _ in dag.adj[s]:
         if label[0] is None:
             return True
 
@@ -25,7 +25,7 @@ def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
     while queue:
         source = queue.popleft()
 
-        for label, target in dag.coadj[source]:
+        for label, target in dag.adj[source]:
             if label[0] is not None and label[0] not in Sm:
                 if target not in path_set:
                     queue.append(target)
@@ -73,7 +73,7 @@ def next_level(dag: DAG, gamma: list):
     while stack:
         source = stack.pop()
 
-        for label, target in dag.coadj[source]:
+        for label, target in dag.adj[source]:
             if label[0] is not None:
                 K.add(label[0])
 
