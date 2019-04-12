@@ -1,5 +1,5 @@
 import numpy
-from tqdm import tqdm
+import tqdm
 
 import benchmark
 from atoms import Atom
@@ -76,7 +76,12 @@ class IndexedDag:
         self.__follow_assignations__(0)
         self.__update_rlevel__(0)
 
-        for curr_level in tqdm(range(len(self.document))):
+        levels_iter = tqdm.trange(len(self.document),
+                                  desc='preprocessing',
+                                  unit='B', unit_scale=True,
+                                  dynamic_ncols=True)
+
+        for curr_level in levels_iter:
             curr_letter = self.document[curr_level]
 
             self.__read_letter__(curr_level, curr_letter)
@@ -94,6 +99,8 @@ class IndexedDag:
                 if level in self.levelset.vertices:
                     if not self.clean_level(level):
                         pass
+
+            levels_iter.set_postfix({'levels': len(self.levelset.vertices)})
 
         # Add Jump from final vertex
         self.dag.finals = []
