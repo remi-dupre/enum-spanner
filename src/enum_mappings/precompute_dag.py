@@ -4,9 +4,7 @@ import numpy
 import tqdm
 
 import benchmark
-from atoms import Atom
-from dag import DAG, EmptyLangage
-from mapping import Variable
+from dag import EmptyLangage
 from va import VA
 
 
@@ -25,10 +23,10 @@ class LevelSet:
     def register(self, vertex, level: int):
         if level not in self.vertices:
             self.vertices[level] = []
-
-        self.levels[vertex] = level
-        self.vertices[level].append(vertex)
-        self.vertex_index[vertex] = len(self.vertices[level]) - 1
+        if vertex not in self.vertex_index:
+            self.levels[vertex] = level
+            self.vertices[level].append(vertex)
+            self.vertex_index[vertex] = len(self.vertices[level]) - 1
 
     def remove_from_level(self, level: int, del_vertices: set):
         new_vertices = []
@@ -171,6 +169,91 @@ class Jump:
 
         return numpy.sum(self.reach[sublevel, level][:, vertices], axis=1)
 
+    def clean_layer(self, layer, adj):
+        '''
+        TODO
+        '''
+        if layer not in self.levelset.vertices:
+            return False
+
+        # Run over the level and eliminate all path that are not usefull ie.
+        # paths that don't access to a jumpable vertex
+        seen = set()
+        del_vertices = set(self.levelset.vertices[layer])
+
+        for start in self.levelset.vertices[layer]:
+            if start in seen:
+                continue
+
+            heap = [(start, [start])]
+
+            while heap:
+                source, path = heap.pop()
+                seen.add(source)
+
+                if ((self.count_ingoing_jumps[layer][self.levelset.vertex_index[source]] > 0) or
+                        any((vertex, layer) not in del_vertices for vertex in adj[source[0]] if (vertex, layer) in self.levelset.vertices[layer])):
+                    for vertex in path:
+                        if vertex in del_vertices:
+                            del_vertices.remove(vertex)
+                    path = []
+                # TODO: better run
+                #  elif all((target, layer) in del_vertices for target in adj[source[0]] if (target, layer) in seen):
+                #      print('remove path', path)
+                #      path = []
+
+                for target in adj[source[0]]:
+                    if (target, layer) not in seen and (target, layer) in del_vertices:
+                        path = path.copy()
+                        path.append((target, layer))
+                        heap.append(((target, layer), path))
+
+        if not del_vertices:
+            return False
+
+        #  print(layer, del_vertices, self.count_ingoing_jumps[layer])
+
+        # Update count of ingoing jump pointers for reachable levels
+        removed_columns = [self.levelset.vertex_index[x] for x in del_vertices]
+
+        for uplayer in self.rev_rlevel[layer]:
+            self.reach[layer, uplayer] = numpy.delete(
+                self.reach[layer, uplayer], removed_columns, axis=0)
+
+        for sublayer in self.rlevel[layer]:
+            self.count_ingoing_jumps[sublayer] -= self.count_inbetween_jumps(
+                removed_columns, layer, sublayer)
+
+            self.reach[sublayer, layer] = numpy.delete(
+                self.reach[sublayer, layer], removed_columns, axis=1)
+
+        # Apply deletion
+        self.levelset.remove_from_level(layer, del_vertices)
+        self.count_ingoing_jumps[layer] = numpy.delete(
+            self.count_ingoing_jumps[layer], removed_columns)
+
+        for vertex in del_vertices:
+            if vertex in self.jl:
+                del self.jl[vertex]
+
+        if not self.levelset.vertices[layer]:
+            del self.levelset.vertices[layer]
+
+            for sublevel in self.rlevel[layer]:
+                del self.reach[sublevel, layer]
+
+            for uplayer in self.rev_rlevel[layer]:
+                del self.reach[layer, uplayer]
+                self.rlevel[uplayer].remove(layer)
+
+            for sublayer in self.rlevel[layer]:
+                self.rev_rlevel[sublayer].remove(layer)
+
+            del self.rlevel[layer]
+            del self.rev_rlevel[layer]
+
+        return True
+
     def __call__(self, layer, gamma):
         i = layer
         j = max((self.jl[vertex, layer] for vertex in gamma if (vertex, layer) in self.jl),
@@ -216,73 +299,7 @@ class IndexedDag:
             self.jump.next_layer(self.va.get_adj_for_char(curr_letter),
                                  self.va.get_adj_for_assignations())
 
-    #  def clean_level(self, level):
-    #      # Find out all vertices that need to be deleted
-    #      del_vertices = set()
-    #      heap = [vertex for vertex in self.levelset.vertices[level]
-    #              if (self.count_ingoing_jumps[vertex] == 0
-    #                  and self.count_outgoing_assignations[vertex] == 0)]
-    #
-    #      while heap:
-    #          vertex = heap.pop()
-    #          del_vertices.add(vertex)
-    #
-    #          for _, target in self.dag.adj[vertex]:
-    #              # TODO: make clearer the fact that no e-transitions are in the
-    #              #       dag
-    #              self.count_outgoing_assignations[target] -= 1
-    #
-    #              if (self.count_outgoing_assignations[target] == 0
-    #                      and self.count_ingoing_jumps[target] == 0):
-    #                  heap.append(target)
-    #
-    #      if not del_vertices:
-    #          return False
-    #
-    #      # Update count of ingoing jump pointers for reachable levels
-    #      removed_columns = [self.levelset.vertex_index[x] for x in del_vertices]
-    #
-    #      for uplevel in self.rev_rlevel[level]:
-    #          self.reach[level, uplevel] = numpy.delete(
-    #              self.reach[level, uplevel], removed_columns, axis=0)
-    #
-    #      for sublevel in self.rlevel[level]:
-    #          removed_pointers = self.count_inbetween_jumps(
-    #              del_vertices, level, sublevel)
-    #
-    #          for i, count in enumerate(removed_pointers):
-    #              subvertex = self.levelset.vertices[sublevel][i]
-    #              self.count_ingoing_jumps[subvertex] -= count
-    #
-    #          self.reach[sublevel, level] = numpy.delete(
-    #              self.reach[sublevel, level], removed_columns, axis=1)
-    #
-    #      # Apply deletion
-    #      self.levelset.remove_from_level(level, del_vertices)
-    #
-    #      for vertex in del_vertices:
-    #          self.dag.remove_vertex(vertex)
-    #          del self.count_outgoing_assignations[vertex]
-    #          del self.count_ingoing_jumps[vertex]
-    #          del self.jl[vertex]
-    #
-    #          if vertex in self.ingoing_assignations:
-    #              self.ingoing_assignations.remove(vertex)
-    #
-    #      if not self.levelset.vertices[level]:
-    #          del self.levelset.vertices[level]
-    #
-    #          for sublevel in self.rlevel[level]:
-    #              del self.reach[sublevel, level]
-    #
-    #          for uplevel in self.rev_rlevel[level]:
-    #              del self.reach[level, uplevel]
-    #              self.rlevel[uplevel].remove(level)
-    #
-    #          for sublevel in self.rlevel[level]:
-    #            self.rev_rlevel[sublevel].remove(level)
-    #
-    #        del self.rlevel[level]
-    #        del self.rev_rlevel[level]
-    #
-    #    return True
+            # Clean the level at exponential depth
+            depth = curr_level & -curr_level
+            for level in range(curr_level, curr_level - depth, -1):
+                self.jump.clean_layer(level, self.va.get_adj_for_assignations())

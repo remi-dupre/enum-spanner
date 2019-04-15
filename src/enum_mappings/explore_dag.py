@@ -82,8 +82,7 @@ def next_level(adj, gamma: list):
         if gamma2 is None:
             gamma2 = follow_SpSm(adj, gamma, Sp, Sm)
 
-        Sp = [var for var in Sp]
-        yield Sp, gamma2
+        yield list(Sp), gamma2
 
 
 def enum_dag_mappings(index):
@@ -92,8 +91,7 @@ def enum_dag_mappings(index):
     document = index.document
 
     # a stack of pairs (gamma, mapping)
-    start = [state for state in va.final]
-    stack = [(len(document), start, [])]
+    stack = [(len(document), list(va.final), [])]
 
     while stack:
         level, gamma, mapping = stack.pop()
