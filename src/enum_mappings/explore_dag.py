@@ -1,39 +1,27 @@
 from collections import deque
 
 from benchmark import track
-from dag import DAG
 
 
-def has_intgoing_epsilon(dag, s):
-    '''
-    Check if an edge in a DAG has an outgoing edge labeled with an
-    epsilon-transition.
-    '''
-    for label, _ in dag.adj[s]:
-        if label[0] is None:
-            return True
-
-    return False
-
-
-def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
+def follow_SpSm(adj, gamma: list, Sp: list, Sm: list):
     Sm = set(Sm)
     Sp = set(Sp)
-    path_set = {vertex: set() for vertex in gamma}
+    path_set = {state: set() for state, _ in gamma}
     queue = deque(gamma.copy())
+    level = gamma[0][1]
 
     while queue:
-        source = queue.popleft()
+        source, level = queue.popleft()
 
-        for label, target in dag.adj[source]:
-            if label[0] is not None and label[0] not in Sm:
+        for label, target in adj[source]:
+            if label not in Sm:
                 if target not in path_set:
-                    queue.append(target)
+                    queue.append((target, level))
 
                 new_ps = path_set[source].copy()
 
-                if label[0] in Sp:
-                    new_ps.add(label[0])
+                if label in Sp:
+                    new_ps.add(label)
 
                 # If the state has a failure anotation, we can skip it
                 if target in path_set and path_set[target] is None:
@@ -48,22 +36,10 @@ def follow_SpSm(dag: DAG, gamma: list, Sp: list, Sm: list):
                           or path_set[target] <= new_ps):
                     path_set[target] = None
 
-    return [vertex for vertex, ps in path_set.items() if ps == Sp]
-
-
-def follow_epsilons(dag: DAG, gamma: list):
-    gamma2 = set()
-
-    for source in gamma:
-        for label, target in dag.adj[source]:
-            if label[0] is None:
-                gamma2.add(target)
-
-    return list(gamma2)
-
+    return [(vertex, level) for vertex, ps in path_set.items() if ps == Sp]
 
 @track
-def next_level(dag: DAG, gamma: list):
+def next_level(adj, gamma: list):
     K = set()
 
     # Get list of variables that are part of the level
@@ -71,22 +47,21 @@ def next_level(dag: DAG, gamma: list):
     mark = set(gamma)
 
     while stack:
-        source = stack.pop()
+        source, level = stack.pop()
 
-        for label, target in dag.adj[source]:
-            if label[0] is not None:
-                K.add(label[0])
+        for label, target in adj[source]:
+            K.add(label)
 
-                if target not in mark:
-                    mark.add(target)
-                    stack.append(target)
+            if target not in mark:
+                mark.add(target)
+                stack.append((target, level))
 
     K = list(K)
     stack = [([], [])]
 
     while stack:
         Sp, Sm = stack.pop()
-        gamma2 = follow_SpSm(dag, gamma, Sp, Sm)
+        gamma2 = follow_SpSm(adj, gamma, Sp, Sm)
 
         if not gamma2:
             continue
@@ -94,7 +69,7 @@ def next_level(dag: DAG, gamma: list):
         while len(Sp) + len(Sm) < len(K):
             depth = len(Sp) + len(Sm)
             Sp.append(K[depth])
-            gamma2 = follow_SpSm(dag, gamma, Sp, Sm)
+            gamma2 = follow_SpSm(adj, gamma, Sp, Sm)
 
             if gamma2:
                 new_Sp = Sp.copy()
@@ -106,7 +81,7 @@ def next_level(dag: DAG, gamma: list):
                 gamma2 = None
 
         if gamma2 is None:
-            gamma2 = follow_SpSm(dag, gamma, Sp, Sm)
+            gamma2 = follow_SpSm(adj, gamma, Sp, Sm)
 
         # TODO: less dirty level handling
         curr_level = gamma[0][1]
@@ -116,20 +91,26 @@ def next_level(dag: DAG, gamma: list):
 
 def enum_dag_mappings(index):
     jump = index.jump
-    dag = index.dag
+    va = index.va
+    document = index.document
 
     # a stack of pairs (gamma, mapping)
-    stack = [(['vf'], [])]
+    start = [(state, len(document)) for state in va.final]
+    stack = [(start, [])]
 
     while stack:
         gamma, mapping = stack.pop()
-        gamma = jump(gamma)
 
-        if len(gamma) == 1 and gamma[0] == dag.initial:
-            yield mapping
-        else:
-            for Sp, new_gamma in next_level(dag, gamma):
+        for Sp, new_gamma in next_level(va.get_rev_assignations(), gamma):
+            if not new_gamma:
+                continue
+
+            new_mapping = mapping.copy()
+            new_mapping.extend(Sp)
+
+            if new_gamma[0][1] == 0 and (va.initial, 0) in new_gamma:
+                yield new_mapping
+            else:
+                new_gamma = jump(new_gamma[0][1], new_gamma)
                 if new_gamma:
-                    new_mapping = mapping.copy()
-                    new_mapping.extend(Sp)
                     stack.append((new_gamma, new_mapping))
