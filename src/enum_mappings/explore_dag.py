@@ -6,17 +6,16 @@ from benchmark import track
 def follow_SpSm(adj, gamma: list, Sp: list, Sm: list):
     Sm = set(Sm)
     Sp = set(Sp)
-    path_set = {state: set() for state, _ in gamma}
+    path_set = {state: set() for state in gamma}
     queue = deque(gamma.copy())
-    level = gamma[0][1]
 
     while queue:
-        source, level = queue.popleft()
+        source = queue.popleft()
 
         for label, target in adj[source]:
             if label not in Sm:
                 if target not in path_set:
-                    queue.append((target, level))
+                    queue.append(target)
 
                 new_ps = path_set[source].copy()
 
@@ -36,7 +35,7 @@ def follow_SpSm(adj, gamma: list, Sp: list, Sm: list):
                           or path_set[target] <= new_ps):
                     path_set[target] = None
 
-    return [(vertex, level) for vertex, ps in path_set.items() if ps == Sp]
+    return [vertex for vertex, ps in path_set.items() if ps == Sp]
 
 @track
 def next_level(adj, gamma: list):
@@ -47,14 +46,14 @@ def next_level(adj, gamma: list):
     mark = set(gamma)
 
     while stack:
-        source, level = stack.pop()
+        source = stack.pop()
 
         for label, target in adj[source]:
             K.add(label)
 
             if target not in mark:
                 mark.add(target)
-                stack.append((target, level))
+                stack.append(target)
 
     K = list(K)
     stack = [([], [])]
@@ -83,9 +82,7 @@ def next_level(adj, gamma: list):
         if gamma2 is None:
             gamma2 = follow_SpSm(adj, gamma, Sp, Sm)
 
-        # TODO: less dirty level handling
-        curr_level = gamma[0][1]
-        Sp = [(var, curr_level) for var in Sp]
+        Sp = [var for var in Sp]
         yield Sp, gamma2
 
 
@@ -95,22 +92,22 @@ def enum_dag_mappings(index):
     document = index.document
 
     # a stack of pairs (gamma, mapping)
-    start = [(state, len(document)) for state in va.final]
-    stack = [(start, [])]
+    start = [state for state in va.final]
+    stack = [(len(document), start, [])]
 
     while stack:
-        gamma, mapping = stack.pop()
+        level, gamma, mapping = stack.pop()
 
         for Sp, new_gamma in next_level(va.get_rev_assignations(), gamma):
             if not new_gamma:
                 continue
 
             new_mapping = mapping.copy()
-            new_mapping.extend(Sp)
+            new_mapping.extend((marker, level) for marker in Sp)
 
-            if new_gamma[0][1] == 0 and (va.initial, 0) in new_gamma:
+            if level == 0 and va.initial in new_gamma:
                 yield new_mapping
             else:
-                new_gamma = jump(new_gamma[0][1], new_gamma)
+                new_level, new_gamma = jump(level, new_gamma)
                 if new_gamma:
-                    stack.append((new_gamma, new_mapping))
+                    stack.append((new_level, new_gamma, new_mapping))
