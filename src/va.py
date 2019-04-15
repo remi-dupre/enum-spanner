@@ -27,7 +27,8 @@ class VA:
         self.get_adj.cache_clear()
         self.get_coadj.cache_clear()
         self.get_variables.cache_clear()
-        self.has_ingoing_assignation.cache_clear()
+        self.get_adj_for_char.cache_clear()
+        self.get_adj_for_assignations.cache_clear()
 
     @property
     def adj(self):
@@ -81,15 +82,73 @@ class VA:
         return list(ret)
 
     @lru_cache(None)
-    def has_ingoing_assignation(self, state: int) -> bool:
+    def get_adj_for_char(self, char):
         '''
-        Check if the given state has an outgoing transition which is labeled
+        Get the adjacency list representing transitions of the automaton that
+        can be used when reading a given char.
         '''
-        for label, _ in self.coadj[state]:
-            if isinstance(label, Atom):
-                return True
+        res = [[] for _ in range(self.nb_states)]
 
-        return False
+        for source, label, target in self.transitions:
+            if isinstance(label, Atom) and label.match(char):
+                res[source].append(target)
+
+        return res
+
+    @lru_cache(1)
+    def get_adj_for_assignations(self):
+        '''
+        Get the adjacency matrix of transitions that can be followed by only
+        reading transitions holding an assignation label.
+        '''
+        return [list(set(target for _, target in neighbours))
+                for neighbours in self.get_assignations()]
+
+    @lru_cache(1)
+    def get_assignations(self):
+        '''
+        Get the adjacency matrix of transitions that can be followed by only
+        reading transitions holding an assignation label, keeping the
+        information of the label hold by every edge.
+        '''
+        # Compute adjacency list
+        adj = [[] for _ in range(self.nb_states)]
+
+        for source, label, target in self.transitions:
+            if isinstance(label, Variable.Marker):
+                adj[source].append((label, target))
+
+        # Compute closure
+        ret = [[] for _ in range(self.nb_states)]
+
+        for state in range(self.nb_states):
+            seen = {state}
+            heap = [state]
+
+            while heap:
+                source = heap.pop()
+
+                for (label, target) in adj[source]:
+                    ret[state].append((label, target))
+
+                    if target not in seen:
+                        heap.append(target)
+                        seen.add(target)
+
+        return ret
+
+    @lru_cache(1)
+    def get_rev_assignations(self):
+        '''
+        Get the reverse of adjacency matrix obtained with `get_assignations`.
+        '''
+        adj = [[] for _ in range(self.nb_states)]
+
+        for source in range(self.nb_states):
+            for label, target in self.get_assignations()[source]:
+                adj[target].append((label, source))
+
+        return adj
 
     def is_valid(self):
         for state in self.final:
