@@ -173,28 +173,28 @@ class Jump:
 
     def __call__(self, layer, gamma):
         i = layer
-        j = max((self.jl[vertex] for vertex in gamma if vertex in self.jl),
+        j = max((self.jl[vertex, layer] for vertex in gamma if (vertex, layer) in self.jl),
                 default=None)
 
         if j is None:
-            return []
+            return j, []
 
         if i == j:
             assert i == 0
-            return []
+            return j, []
 
         gamma2 = []
 
         for l, target in enumerate(self.levelset.vertices[j]):
             for source in gamma:
-                if source in self.jl:
-                    k = self.levelset.vertex_index[source]
+                if (source, layer) in self.jl:
+                    k = self.levelset.vertex_index[source, layer]
 
                     if self.reach[j, i][l, k]:
-                        gamma2.append(target)
+                        gamma2.append(target[0])
                         break
 
-        return gamma2
+        return j, gamma2
 
 
 # TODO: It may be relevent to store nodes of a level in a bit mask and to use
