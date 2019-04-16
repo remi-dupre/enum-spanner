@@ -13,8 +13,6 @@ class LevelSet:
     Represent the partitioning into levels of the DAG.
     '''
     def __init__(self):
-        # Index vertex -> level
-        self.levels = dict()
         # Index level -> vertex
         self.vertices = dict()
         # Index of a vertex in its level
@@ -23,10 +21,11 @@ class LevelSet:
     def register(self, vertex, level: int):
         if level not in self.vertices:
             self.vertices[level] = []
-        if vertex not in self.vertex_index:
-            self.levels[vertex] = level
+            self.vertex_index[level] = dict()
+
+        if vertex not in self.vertex_index[level]:
             self.vertices[level].append(vertex)
-            self.vertex_index[vertex] = len(self.vertices[level]) - 1
+            self.vertex_index[level][vertex] = len(self.vertices[level]) - 1
 
     def remove_from_level(self, level: int, del_vertices: set):
         new_vertices = []
@@ -34,12 +33,20 @@ class LevelSet:
         for old_vertex in self.vertices[level]:
             if old_vertex not in del_vertices:
                 new_vertices.append(old_vertex)
-                self.vertex_index[old_vertex] = len(new_vertices) - 1
+                self.vertex_index[level][old_vertex] = len(new_vertices) - 1
             else:
-                del self.vertex_index[old_vertex]
-                del self.levels[old_vertex]
+                del self.vertex_index[level][old_vertex]
 
-        self.vertices[level] = new_vertices
+        if new_vertices:
+            self.vertices[level] = new_vertices
+        else:
+            del self.vertex_index[level]
+            del self.vertices[level]
+
+    def remove_level(self, level: int):
+        if level in self.vertices:
+            del self.vertices[level]
+            del self.vertex_index[level]
 
 
 class Jump:
@@ -60,14 +67,15 @@ class Jump:
         self.reach = dict()
 
         # Set of vertices that can't be jumped since it has an ingoing
-        # non-jumpable edge
+        # non-jumpable edge (TODO: it may only be required to store it for the
+        # last level)
         self.nonjump_vertices = set()
         # Keep track of number of jumps to a given vertex
         self.count_ingoing_jumps = dict()
 
         # Register initial layer
         for state in initial_layer:
-            self.levelset.register((state, self.last_level), self.last_level)
+            self.levelset.register(state, self.last_level)
             self.jl[state, self.last_level] = 0  # TODO: no special case for initial state
 
         self.extend_layer(0, nonjump_adj)
@@ -86,10 +94,10 @@ class Jump:
 
 
         # Register jumpable transitions from this level to next one
-        for source, _ in self.levelset.vertices[last_level]:
+        for source in self.levelset.vertices[last_level]:
             for target in jump_adj[source]:
-                if target not in self.jl:
-                    self.levelset.register((target, next_level), next_level)
+                if (target, next_level) not in self.jl:
+                    self.levelset.register(target, next_level)
                     self.jl[target, next_level] = 0
 
                 if (source, last_level) in self.nonjump_vertices:
@@ -101,6 +109,7 @@ class Jump:
         if next_level not in self.levelset.vertices:
             raise EmptyLangage
 
+        # TODO: isn't there a better way of organizing this?
         self.extend_layer(next_level, nonjump_adj)
         self.compute_reach(next_level, jump_adj)
         self.last_level = next_level
@@ -108,19 +117,19 @@ class Jump:
     @benchmark.track
     def extend_layer(self, layer, nonjump_adj):
         # Register non-jumpable transitions inside next level
-        for source, _ in self.levelset.vertices[layer]:
+        for source in self.levelset.vertices[layer]:
             for target in nonjump_adj[source]:
                 if (target, layer) not in self.jl:
-                    self.levelset.register((target, layer), layer)
+                    self.levelset.register(target, layer)
 
                 self.nonjump_vertices.add((target, layer))
 
     @benchmark.track
     def compute_reach(self, layer, jump_adj):
         # Update rlevel
-        self.rlevel[layer] = {
-            self.jl[vertex] for vertex in self.levelset.vertices[layer]
-            if vertex in self.jl}
+        self.rlevel[layer] = {self.jl[vertex, layer]
+                              for vertex in self.levelset.vertices[layer]
+                              if (vertex, layer) in self.jl}
         self.rev_rlevel[layer] = set()
 
         for sublevel in self.rlevel[layer]:
@@ -133,10 +142,10 @@ class Jump:
                  len(self.levelset.vertices[layer]))
         self.reach[prev_layer, layer] = numpy.zeros(shape, dtype=bool)
 
-        for source, _ in self.levelset.vertices[prev_layer]:
+        for source in self.levelset.vertices[prev_layer]:
             for target in jump_adj[source]:
-                id_source = self.levelset.vertex_index[source, prev_layer]
-                id_target = self.levelset.vertex_index[target, layer]
+                id_source = self.levelset.vertex_index[prev_layer][source]
+                id_target = self.levelset.vertex_index[layer][target]
                 self.reach[prev_layer, layer][id_source, id_target] = True
 
         for sublevel in self.rlevel[layer]:
@@ -162,7 +171,8 @@ class Jump:
     def count_inbetween_jumps(self, vertices, level, sublevel):
         '''
         Count the number of jump pointers from a given set of vertices in a
-        level to nodes of its sublevel.
+        level to nodes of its sublevel. The vertices given as input shall be
+        represented by their index in `self.levelset.vertices[level]`.
         '''
         if vertices is None:
             return numpy.sum(self.reach[sublevel, level], axis=1)
@@ -171,7 +181,7 @@ class Jump:
 
     def clean_layer(self, layer, adj):
         '''
-        TODO
+        TODO: doc
         '''
         if layer not in self.levelset.vertices:
             return False
@@ -191,22 +201,23 @@ class Jump:
                 source, path = heap.pop()
                 seen.add(source)
 
-                if ((self.count_ingoing_jumps[layer][self.levelset.vertex_index[source]] > 0) or
-                        any((vertex, layer) not in del_vertices for vertex in adj[source[0]] if (vertex, layer) in self.levelset.vertices[layer])):
+                # TODO: the any is a O(W²) + UGLY
+                if ((self.count_ingoing_jumps[layer][self.levelset.vertex_index[layer][source]] > 0) or
+                        any(vertex not in del_vertices for vertex in adj[source] if (vertex, layer) in self.levelset.vertices[layer])):
                     for vertex in path:
                         if vertex in del_vertices:
                             del_vertices.remove(vertex)
                     path = []
-                # TODO: better run
+                # TODO: better run algorithm
                 #  elif all((target, layer) in del_vertices for target in adj[source[0]] if (target, layer) in seen):
                 #      print('remove path', path)
                 #      path = []
 
-                for target in adj[source[0]]:
-                    if (target, layer) not in seen and (target, layer) in del_vertices:
+                for target in adj[source]:
+                    if target not in seen and target in del_vertices:
                         path = path.copy()
-                        path.append((target, layer))
-                        heap.append(((target, layer), path))
+                        path.append(target)
+                        heap.append((target, path))
 
         if not del_vertices:
             return False
@@ -214,7 +225,8 @@ class Jump:
         #  print(layer, del_vertices, self.count_ingoing_jumps[layer])
 
         # Update count of ingoing jump pointers for reachable levels
-        removed_columns = [self.levelset.vertex_index[x] for x in del_vertices]
+        removed_columns = [self.levelset.vertex_index[layer][x]
+                           for x in del_vertices]
 
         for uplayer in self.rev_rlevel[layer]:
             self.reach[layer, uplayer] = numpy.delete(
@@ -233,12 +245,10 @@ class Jump:
             self.count_ingoing_jumps[layer], removed_columns)
 
         for vertex in del_vertices:
-            if vertex in self.jl:
-                del self.jl[vertex]
+            if (vertex, layer) in self.jl:
+                del self.jl[vertex, layer]
 
-        if not self.levelset.vertices[layer]:
-            del self.levelset.vertices[layer]
-
+        if layer not in self.levelset.vertices:
             for sublevel in self.rlevel[layer]:
                 del self.reach[sublevel, layer]
 
@@ -256,8 +266,9 @@ class Jump:
 
     def __call__(self, layer, gamma):
         i = layer
-        j = max((self.jl[vertex, layer] for vertex in gamma if (vertex, layer) in self.jl),
-                default=None)
+        j = max((self.jl[vertex, layer]
+                 for vertex in gamma
+                 if (vertex, layer) in self.jl), default=None)
 
         if j is None:
             return j, []
@@ -271,10 +282,10 @@ class Jump:
         for l, target in enumerate(self.levelset.vertices[j]):
             for source in gamma:
                 if (source, layer) in self.jl:
-                    k = self.levelset.vertex_index[source, layer]
+                    k = self.levelset.vertex_index[layer][source]
 
                     if self.reach[j, i][l, k]:
-                        gamma2.append(target[0])
+                        gamma2.append(target)
                         break
 
         return j, gamma2
@@ -301,5 +312,6 @@ class IndexedDag:
 
             # Clean the level at exponential depth
             depth = curr_level & -curr_level
+
             for level in range(curr_level, curr_level - depth, -1):
                 self.jump.clean_layer(level, self.va.get_adj_for_assignations())
