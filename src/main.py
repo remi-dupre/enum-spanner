@@ -6,7 +6,7 @@ from termcolor import cprint
 
 import benchmark
 import regexp
-from enum_mappings import compile_matches, enum_matches
+from enum_mappings import enum_matches
 
 
 sys.setrecursionlimit(10**4)
@@ -89,8 +89,7 @@ if args.show_automata:
     pattern.render('automata', display=True)
 
 if args.show_graph:
-    dag = compile_matches(pattern, document)
-    dag.render('dag', document=document, display=True)
+    raise NotImplementedError  # TODO
 
 
 # ----- Match The Expression -----
@@ -128,5 +127,5 @@ else:
 # ----- Print Debug Infos -----
 
 if args.debug:
-    print('----- Debug Infos -----')
+    print('----- Debug Infos -----', file=sys.stderr)
     benchmark.print_tracking()

@@ -1,7 +1,6 @@
 from functools import partial
 from termcolor import cprint
 
-import benchmark
 import mapping
 
 
@@ -31,7 +30,6 @@ class Match:
     def groups(self):
         return tuple(self.group(name) for name in self.group_spans)
 
-    @benchmark.track
     def pretty_print(self, only_matching: bool = False):
         symbols = {i : [] for i in range(len(self.document) + 1)}
 

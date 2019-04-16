@@ -155,6 +155,7 @@ class Jump:
 
         return numpy.sum(self.reach[sublevel, level][:, vertices], axis=1)
 
+    @benchmark.track
     def clean_level(self, level, adj):
         '''
         Remove all useless nodes inside current level. A useless node is a node

@@ -2,7 +2,7 @@ from collections import deque
 
 import tqdm
 
-from benchmark import track
+import benchmark
 from enum_mappings.jump import Jump
 from va import VA
 
@@ -14,6 +14,7 @@ class IndexedDag:
     The structure allows to enumerate efficiently all the distinct matches of
     the input automata over the input text.
     '''
+    @benchmark.track
     def __init__(self, va: VA, document: str):
         self.va = va
         self.document = document
@@ -31,6 +32,7 @@ class IndexedDag:
 
             # Clean the level at exponential depth
             depth = curr_level & -curr_level
+            depth = 1
 
             for level in range(curr_level, curr_level - depth, -1):
                 self.jump.clean_level(level, self.va.get_adj_for_assignations())
@@ -70,7 +72,7 @@ class IndexedDag:
 
         return [vertex for vertex, ps in path_set.items() if ps == Sp]
 
-    @track
+    @benchmark.track
     def next_level(self, gamma: list):
         adj = self.va.get_rev_assignations()
         K = set()

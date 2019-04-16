@@ -1,4 +1,5 @@
 import random
+import sys
 import time
 import types
 
@@ -44,8 +45,8 @@ def track(function):
         ret = function(*args, **kwargs)
         time_end = time.time()
 
-        TRACKING[function.__name__]['calls'] += 1
-        TRACKING[function.__name__]['time'] += time_end - time_begin
+        TRACKING[function.__qualname__]['calls'] += 1
+        TRACKING[function.__qualname__]['time'] += time_end - time_begin
 
         if not isinstance(ret, types.GeneratorType):
             return ret
@@ -59,17 +60,22 @@ def track(function):
 
                     yield val
 
-                    TRACKING[function.__name__]['calls'] += 1
-                    TRACKING[function.__name__]['time'] += time_end - time_begin
+                    TRACKING[function.__qualname__]['calls'] += 1
+                    TRACKING[function.__qualname__]['time'] += time_end - time_begin
             except StopIteration:
                 pass
 
         return generator_wrapper()
 
-    TRACKING[function.__name__] = {'calls': 0, 'time': 0}
+    TRACKING[function.__qualname__] = {'calls': 0, 'time': 0}
     return wrapper
 
 
 def print_tracking():
     for function, logs in TRACKING.items():
-        print(f'{function}: {logs}')
+        print(f'{function}:', file=sys.stderr)
+
+        for key, value in logs.items():
+            print(f' - {key}: {value}', file=sys.stderr)
+
+        print(file=sys.stderr)

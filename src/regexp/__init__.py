@@ -1,4 +1,3 @@
-import benchmark
 from enum_mappings import enum_mappings
 from regexp.ast import EnumerateVariables
 from regexp.parse import parser
@@ -7,7 +6,6 @@ from mapping import match_of_mapping
 from va import VA
 
 
-@benchmark.track
 def compile(regexp: str) -> VA:
     '''
     Compile a regexp to a non-deterministic variable automata.
