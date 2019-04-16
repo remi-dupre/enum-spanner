@@ -21,14 +21,14 @@ class IndexedDag:
 
         for curr_level in levels_iter:
             curr_letter = self.document[curr_level]
-            self.jump.next_layer(self.va.get_adj_for_char(curr_letter),
+            self.jump.next_level(self.va.get_adj_for_char(curr_letter),
                                  self.va.get_adj_for_assignations())
 
             # Clean the level at exponential depth
             depth = curr_level & -curr_level
 
             for level in range(curr_level, curr_level - depth, -1):
-                self.jump.clean_layer(level, self.va.get_adj_for_assignations())
+                self.jump.clean_level(level, self.va.get_adj_for_assignations())
 
     def follow_SpSm(self, gamma: list, Sp: list, Sm: list):
         adj = self.va.get_rev_assignations()
@@ -63,7 +63,6 @@ class IndexedDag:
                               or path_set[target] <= new_ps):
                         path_set[target] = None
 
-        print(gamma, Sp, Sm, ' -> ', [vertex for vertex, ps in path_set.items() if ps == Sp])
         return [vertex for vertex, ps in path_set.items() if ps == Sp]
 
     @track
@@ -122,7 +121,6 @@ class IndexedDag:
             level, gamma, mapping = stack.pop()
 
             for Sp, new_gamma in self.next_level(gamma):
-                #  print(level, gamma, f' - ({Sp}) ->', new_gamma)
                 if not new_gamma:
                     continue
 
@@ -132,8 +130,7 @@ class IndexedDag:
                 if level == 0 and self.va.initial in new_gamma:
                     yield new_mapping
                 else:
-                    #  print(level, new_gamma, end=' -> ')
                     new_level, new_gamma = self.jump(level, new_gamma)
-                    #  print(new_level, new_gamma, f'... ({Sp})')
+
                     if new_gamma:
                         stack.append((new_level, new_gamma, new_mapping))

@@ -10,7 +10,7 @@ class EmptyLevel(Exception):
 
 class Jump:
 
-    def __init__(self, initial_layer, nonjump_adj):
+    def __init__(self, initial_level, nonjump_adj):
         # Layers in the levelset will be built one by one
         self.levelset = LevelSet()
         self.last_level = 0
@@ -32,17 +32,17 @@ class Jump:
         # Keep track of number of jumps to a given vertex
         self.count_ingoing_jumps = dict()
 
-        # Register initial layer
-        for state in initial_layer:
+        # Register initial level
+        for state in initial_level:
             self.levelset.register(state, self.last_level)
             self.jl[state, self.last_level] = 0
 
-        self.extend_layer(0, nonjump_adj)
+        self.extend_level(0, nonjump_adj)
         self.count_ingoing_jumps[0] = numpy.zeros(
             len(self.levelset.vertices[0]), dtype=int)
 
     @benchmark.track
-    def next_layer(self, jump_adj, nonjump_adj):
+    def next_level(self, jump_adj, nonjump_adj):
         '''
         Compute next level given the adjacency list of jumpable edges from
         current level to the next one and adjacency list of non-jumpable edges
@@ -69,62 +69,62 @@ class Jump:
             raise EmptyLevel
 
         # TODO: isn't there a better way of organizing this?
-        self.extend_layer(next_level, nonjump_adj)
+        self.extend_level(next_level, nonjump_adj)
         self.compute_reach(next_level, jump_adj)
         self.last_level = next_level
 
     @benchmark.track
-    def extend_layer(self, layer, nonjump_adj):
+    def extend_level(self, level, nonjump_adj):
         # Register non-jumpable transitions inside next level
-        for source in self.levelset.vertices[layer]:
+        for source in self.levelset.vertices[level]:
             for target in nonjump_adj[source]:
-                if (target, layer) not in self.jl:
-                    self.levelset.register(target, layer)
+                if (target, level) not in self.jl:
+                    self.levelset.register(target, level)
 
-                self.nonjump_vertices.add((target, layer))
+                self.nonjump_vertices.add((target, level))
 
     @benchmark.track
-    def compute_reach(self, layer, jump_adj):
+    def compute_reach(self, level, jump_adj):
         # Update rlevel
-        self.rlevel[layer] = {self.jl[vertex, layer]
-                              for vertex in self.levelset.vertices[layer]
-                              if (vertex, layer) in self.jl}
-        self.rev_rlevel[layer] = set()
+        self.rlevel[level] = {self.jl[vertex, level]
+                              for vertex in self.levelset.vertices[level]
+                              if (vertex, level) in self.jl}
+        self.rev_rlevel[level] = set()
 
-        for sublevel in self.rlevel[layer]:
-            self.rev_rlevel[sublevel].add(layer)
+        for sublevel in self.rlevel[level]:
+            self.rev_rlevel[sublevel].add(level)
 
         # Update reach
-        prev_layer = layer - 1
+        prev_level = level - 1
 
-        shape = (len(self.levelset.vertices[prev_layer]),
-                 len(self.levelset.vertices[layer]))
-        self.reach[prev_layer, layer] = numpy.zeros(shape, dtype=bool)
+        shape = (len(self.levelset.vertices[prev_level]),
+                 len(self.levelset.vertices[level]))
+        self.reach[prev_level, level] = numpy.zeros(shape, dtype=bool)
 
-        for source in self.levelset.vertices[prev_layer]:
+        for source in self.levelset.vertices[prev_level]:
             for target in jump_adj[source]:
-                id_source = self.levelset.vertex_index[prev_layer][source]
-                id_target = self.levelset.vertex_index[layer][target]
-                self.reach[prev_layer, layer][id_source, id_target] = True
+                id_source = self.levelset.vertex_index[prev_level][source]
+                id_target = self.levelset.vertex_index[level][target]
+                self.reach[prev_level, level][id_source, id_target] = True
 
-        for sublevel in self.rlevel[layer]:
-            if sublevel >= prev_layer:
+        for sublevel in self.rlevel[level]:
+            if sublevel >= prev_level:
                 continue
 
-            self.reach[sublevel, layer] = numpy.dot(
-                self.reach[sublevel, prev_layer],
-                self.reach[prev_layer, layer])
+            self.reach[sublevel, level] = numpy.dot(
+                self.reach[sublevel, prev_level],
+                self.reach[prev_level, level])
 
-        if prev_layer not in self.rlevel[layer]:
-            del self.reach[prev_layer, layer]
+        if prev_level not in self.rlevel[level]:
+            del self.reach[prev_level, level]
 
         # Update jump counters
-        self.count_ingoing_jumps[layer] = numpy.zeros(
-            len(self.levelset.vertices[layer]), dtype=int)
+        self.count_ingoing_jumps[level] = numpy.zeros(
+            len(self.levelset.vertices[level]), dtype=int)
 
-        for sublevel in self.rlevel[layer]:
+        for sublevel in self.rlevel[level]:
             self.count_ingoing_jumps[sublevel] += (
-                self.count_inbetween_jumps(None, layer, sublevel))
+                self.count_inbetween_jumps(None, level, sublevel))
 
     @benchmark.track
     def count_inbetween_jumps(self, vertices, level, sublevel):
@@ -138,18 +138,18 @@ class Jump:
 
         return numpy.sum(self.reach[sublevel, level][:, vertices], axis=1)
 
-    def clean_layer(self, layer, adj):
+    def clean_level(self, level, adj):
         # TODO: doc
-        if layer not in self.levelset.vertices:
+        if level not in self.levelset.vertices:
             return False
 
         # Run over the level and eliminate all path that are not usefull ie.
         # paths that don't access to a jumpable vertex
         seen = set()
-        lvl_vertices = set(self.levelset.vertices[layer])
-        del_vertices = set(self.levelset.vertices[layer])
+        lvl_vertices = set(self.levelset.vertices[level])
+        del_vertices = set(self.levelset.vertices[level])
 
-        for start in self.levelset.vertices[layer]:
+        for start in self.levelset.vertices[level]:
             if start in seen:
                 continue
 
@@ -157,13 +157,13 @@ class Jump:
 
             while heap:
                 source, path = heap.pop()
-                source_id = self.levelset.vertex_index[layer][source]
+                source_id = self.levelset.vertex_index[level][source]
                 seen.add(source)
 
                 # If the path can be identified as usefull, remove it from the
                 # set of vertices to delete
                 usefull_path = (
-                    self.count_ingoing_jumps[layer][source_id] > 0
+                    self.count_ingoing_jumps[level][source_id] > 0
                     or any(vertex not in del_vertices
                            for vertex in adj[source] if vertex in lvl_vertices))
 
@@ -185,50 +185,50 @@ class Jump:
             return False
 
         # Update count of ingoing jump pointers for reachable levels
-        removed_columns = [self.levelset.vertex_index[layer][x]
+        removed_columns = [self.levelset.vertex_index[level][x]
                            for x in del_vertices]
 
-        for uplayer in self.rev_rlevel[layer]:
-            self.reach[layer, uplayer] = numpy.delete(
-                self.reach[layer, uplayer], removed_columns, axis=0)
+        for uplevel in self.rev_rlevel[level]:
+            self.reach[level, uplevel] = numpy.delete(
+                self.reach[level, uplevel], removed_columns, axis=0)
 
-        for sublayer in self.rlevel[layer]:
-            self.count_ingoing_jumps[sublayer] -= self.count_inbetween_jumps(
-                removed_columns, layer, sublayer)
+        for sublevel in self.rlevel[level]:
+            self.count_ingoing_jumps[sublevel] -= self.count_inbetween_jumps(
+                removed_columns, level, sublevel)
 
-            self.reach[sublayer, layer] = numpy.delete(
-                self.reach[sublayer, layer], removed_columns, axis=1)
+            self.reach[sublevel, level] = numpy.delete(
+                self.reach[sublevel, level], removed_columns, axis=1)
 
         # Apply deletion
-        self.levelset.remove_from_level(layer, del_vertices)
-        self.count_ingoing_jumps[layer] = numpy.delete(
-            self.count_ingoing_jumps[layer], removed_columns)
+        self.levelset.remove_from_level(level, del_vertices)
+        self.count_ingoing_jumps[level] = numpy.delete(
+            self.count_ingoing_jumps[level], removed_columns)
 
         for vertex in del_vertices:
-            if (vertex, layer) in self.jl:
-                del self.jl[vertex, layer]
+            if (vertex, level) in self.jl:
+                del self.jl[vertex, level]
 
-        if layer not in self.levelset.vertices:
-            for sublevel in self.rlevel[layer]:
-                del self.reach[sublevel, layer]
+        if level not in self.levelset.vertices:
+            for sublevel in self.rlevel[level]:
+                del self.reach[sublevel, level]
 
-            for uplayer in self.rev_rlevel[layer]:
-                del self.reach[layer, uplayer]
-                self.rlevel[uplayer].remove(layer)
+            for uplevel in self.rev_rlevel[level]:
+                del self.reach[level, uplevel]
+                self.rlevel[uplevel].remove(level)
 
-            for sublayer in self.rlevel[layer]:
-                self.rev_rlevel[sublayer].remove(layer)
+            for sublevel in self.rlevel[level]:
+                self.rev_rlevel[sublevel].remove(level)
 
-            del self.rlevel[layer]
-            del self.rev_rlevel[layer]
+            del self.rlevel[level]
+            del self.rev_rlevel[level]
 
         return True
 
-    def __call__(self, layer, gamma):
-        i = layer
-        j = max((self.jl[vertex, layer]
+    def __call__(self, level, gamma):
+        i = level
+        j = max((self.jl[vertex, level]
                  for vertex in gamma
-                 if (vertex, layer) in self.jl), default=None)
+                 if (vertex, level) in self.jl), default=None)
 
         if j is None:
             return j, []
@@ -241,8 +241,8 @@ class Jump:
 
         for l, target in enumerate(self.levelset.vertices[j]):
             for source in gamma:
-                if (source, layer) in self.jl:
-                    k = self.levelset.vertex_index[layer][source]
+                if (source, level) in self.jl:
+                    k = self.levelset.vertex_index[level][source]
 
                     if self.reach[j, i][l, k]:
                         gamma2.append(target)
