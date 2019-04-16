@@ -36,43 +36,62 @@ def bench(function, inputs: list):
 TRACKING = dict()
 
 
+class track_block:
+    '''
+    Track the time spent on the given block.
+
+    Usage:
+    >> with track_block('block name'):
+    >>     do_something_here()
+    '''
+    def __init__(self, name: str):
+        self.name = name
+        self.time_begin = None
+        self.time_end = None
+
+        if self.name not in TRACKING:
+            TRACKING[self.name] = {'calls': 0, 'time': 0}
+
+    def __enter__(self):
+        self.time_begin = time.time()
+
+    def __exit__(self, _type, value, traceback):
+        self.time_end = time.time()
+        TRACKING[self.name]['calls'] += 1
+        TRACKING[self.name]['time'] += self.time_end - self.time_begin
+
+
 def track(function):
     '''
-    Track time spent in a decorated function.
+    Track time spent in a decorated function or generator.
     '''
     def wrapper(*args, **kwargs):
-        time_begin = time.time()
-        ret = function(*args, **kwargs)
-        time_end = time.time()
+        name = function.__qualname__
 
-        TRACKING[function.__qualname__]['calls'] += 1
-        TRACKING[function.__qualname__]['time'] += time_end - time_begin
+        with track_block(name):
+            ret = function(*args, **kwargs)
 
         if not isinstance(ret, types.GeneratorType):
             return ret
 
+        # If the function produced a generator, track all accesses to this
+        # generator
         def generator_wrapper():
             try:
                 while True:
-                    time_begin = time.time()
-                    val = next(ret)
-                    time_end = time.time()
-
+                    with track_block(name):
+                        val = next(ret)
                     yield val
-
-                    TRACKING[function.__qualname__]['calls'] += 1
-                    TRACKING[function.__qualname__]['time'] += time_end - time_begin
             except StopIteration:
                 pass
 
         return generator_wrapper()
 
-    TRACKING[function.__qualname__] = {'calls': 0, 'time': 0}
     return wrapper
 
 
 def print_tracking():
-    for function, logs in TRACKING.items():
+    for function, logs in sorted(TRACKING.items(), key=lambda x: -x[1]['time']):
         print(f'{function}:', file=sys.stderr)
 
         for key, value in logs.items():

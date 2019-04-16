@@ -167,82 +167,86 @@ class Jump:
 
         # Run over the level and eliminate all path that are not usefull ie.
         # paths that don't access to a jumpable vertex
-        seen = set()
-        lvl_vertices = set(self.levelset.vertices[level])
-        del_vertices = set(self.levelset.vertices[level])
 
-        for start in self.levelset.vertices[level]:
-            if start in seen:
-                continue
+        with benchmark.track_block('clean: select vertices'):
+            seen = set()
+            lvl_vertices = set(self.levelset.vertices[level])
+            del_vertices = set(self.levelset.vertices[level])
 
-            heap = [(start, [start])]
+            for start in self.levelset.vertices[level]:
+                if start in seen:
+                    continue
 
-            while heap:
-                source, path = heap.pop()
-                source_id = self.levelset.vertex_index[level][source]
-                seen.add(source)
+                heap = [(start, [start])]
 
-                # If the path can be identified as usefull, remove it from the
-                # set of vertices to delete
-                usefull_path = (
-                    self.count_ingoing_jumps[level][source_id] > 0
-                    or any(vertex not in del_vertices
-                           for vertex in adj[source] if vertex in lvl_vertices))
+                while heap:
+                    source, path = heap.pop()
+                    source_id = self.levelset.vertex_index[level][source]
+                    seen.add(source)
 
-                if usefull_path:
-                    for vertex in path:
-                        if vertex in del_vertices:
-                            del_vertices.remove(vertex)
+                    # If the path can be identified as usefull, remove it from the
+                    # set of vertices to delete
+                    usefull_path = (
+                        self.count_ingoing_jumps[level][source_id] > 0
+                        or any(vertex not in del_vertices
+                               for vertex in adj[source] if vertex in lvl_vertices))
 
-                    path = []
+                    if usefull_path:
+                        for vertex in path:
+                            if vertex in del_vertices:
+                                del_vertices.remove(vertex)
 
-                for target in adj[source]:
-                    if target in lvl_vertices and target not in seen:
-                        assert target in del_vertices
-                        target_path = path.copy()
-                        target_path.append(target)
-                        heap.append((target, target_path))
+                        path = []
 
-        if not del_vertices:
-            return False
+                    for target in adj[source]:
+                        if target in lvl_vertices and target not in seen:
+                            assert target in del_vertices
+                            target_path = path.copy()
+                            target_path.append(target)
+                            heap.append((target, target_path))
+
+            if not del_vertices:
+                return False
 
         # Update count of ingoing jump pointers for reachable levels
-        removed_columns = [self.levelset.vertex_index[level][x]
-                           for x in del_vertices]
-
-        for uplevel in self.rev_rlevel[level]:
-            self.reach[level, uplevel] = numpy.delete(
-                self.reach[level, uplevel], removed_columns, axis=0)
-
-        for sublevel in self.rlevel[level]:
-            self.count_ingoing_jumps[sublevel] -= self.count_inbetween_jumps(
-                removed_columns, level, sublevel)
-
-            self.reach[sublevel, level] = numpy.delete(
-                self.reach[sublevel, level], removed_columns, axis=1)
-
-        # Apply deletion
-        self.levelset.remove_from_level(level, del_vertices)
-        self.count_ingoing_jumps[level] = numpy.delete(
-            self.count_ingoing_jumps[level], removed_columns)
-
-        for vertex in del_vertices:
-            if (vertex, level) in self.jl:
-                del self.jl[vertex, level]
-
-        if level not in self.levelset.vertices:
-            for sublevel in self.rlevel[level]:
-                del self.reach[sublevel, level]
+        with benchmark.track_block('clean: update counts'):
+            removed_columns = [self.levelset.vertex_index[level][x]
+                               for x in del_vertices]
 
             for uplevel in self.rev_rlevel[level]:
-                del self.reach[level, uplevel]
-                self.rlevel[uplevel].remove(level)
+                self.reach[level, uplevel] = numpy.delete(
+                    self.reach[level, uplevel], removed_columns, axis=0)
 
             for sublevel in self.rlevel[level]:
-                self.rev_rlevel[sublevel].remove(level)
+                self.count_ingoing_jumps[sublevel] -= self.count_inbetween_jumps(
+                    removed_columns, level, sublevel)
 
-            del self.rlevel[level]
-            del self.rev_rlevel[level]
+                self.reach[sublevel, level] = numpy.delete(
+                    self.reach[sublevel, level], removed_columns, axis=1)
+
+        # Apply deletion
+        with benchmark.track_block('clean: apply'):
+            self.levelset.remove_from_level(level, del_vertices)
+            self.count_ingoing_jumps[level] = numpy.delete(
+                self.count_ingoing_jumps[level], removed_columns)
+
+            for vertex in del_vertices:
+                if (vertex, level) in self.jl:
+                    del self.jl[vertex, level]
+
+            if level not in self.levelset.vertices:
+                for sublevel in self.rlevel[level]:
+                    del self.reach[sublevel, level]
+
+                for uplevel in self.rev_rlevel[level]:
+                    del self.reach[level, uplevel]
+                    self.rlevel[uplevel].remove(level)
+
+                for sublevel in self.rlevel[level]:
+                    self.rev_rlevel[sublevel].remove(level)
+
+                del self.rlevel[level]
+                del self.rev_rlevel[level]
 
         return True
 
