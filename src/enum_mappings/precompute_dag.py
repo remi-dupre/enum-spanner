@@ -189,6 +189,7 @@ class Jump:
         # Run over the level and eliminate all path that are not usefull ie.
         # paths that don't access to a jumpable vertex
         seen = set()
+        lvl_vertices = set(self.levelset.vertices[layer])
         del_vertices = set(self.levelset.vertices[layer])
 
         for start in self.levelset.vertices[layer]:
@@ -199,30 +200,32 @@ class Jump:
 
             while heap:
                 source, path = heap.pop()
+                source_id = self.levelset.vertex_index[layer][source]
                 seen.add(source)
 
-                # TODO: the any is a O(W²) + UGLY
-                if ((self.count_ingoing_jumps[layer][self.levelset.vertex_index[layer][source]] > 0) or
-                        any(vertex not in del_vertices for vertex in adj[source] if (vertex, layer) in self.levelset.vertices[layer])):
+                # If the path can be identified as usefull, remove it from the
+                # set of vertices to delete
+                usefull_path = (
+                    self.count_ingoing_jumps[layer][source_id] > 0
+                    or any(vertex not in del_vertices
+                           for vertex in adj[source] if vertex in lvl_vertices))
+
+                if usefull_path:
                     for vertex in path:
                         if vertex in del_vertices:
                             del_vertices.remove(vertex)
+
                     path = []
-                # TODO: better run algorithm
-                #  elif all((target, layer) in del_vertices for target in adj[source[0]] if (target, layer) in seen):
-                #      print('remove path', path)
-                #      path = []
 
                 for target in adj[source]:
-                    if target not in seen and target in del_vertices:
-                        path = path.copy()
-                        path.append(target)
-                        heap.append((target, path))
+                    if target in lvl_vertices and target not in seen:
+                        assert target in del_vertices
+                        target_path = path.copy()
+                        target_path.append(target)
+                        heap.append((target, target_path))
 
         if not del_vertices:
             return False
-
-        #  print(layer, del_vertices, self.count_ingoing_jumps[layer])
 
         # Update count of ingoing jump pointers for reachable levels
         removed_columns = [self.levelset.vertex_index[layer][x]
