@@ -1,52 +1,11 @@
-from functools import lru_cache
-
 import numpy
-import tqdm
 
 import benchmark
-from dag import EmptyLangage
-from va import VA
+from enum_mappings.levelset import LevelSet
 
 
-class LevelSet:
-    '''
-    Represent the partitioning into levels of the DAG.
-    '''
-    def __init__(self):
-        # Index level -> vertex
-        self.vertices = dict()
-        # Index of a vertex in its level
-        self.vertex_index = dict()
-
-    def register(self, vertex, level: int):
-        if level not in self.vertices:
-            self.vertices[level] = []
-            self.vertex_index[level] = dict()
-
-        if vertex not in self.vertex_index[level]:
-            self.vertices[level].append(vertex)
-            self.vertex_index[level][vertex] = len(self.vertices[level]) - 1
-
-    def remove_from_level(self, level: int, del_vertices: set):
-        new_vertices = []
-
-        for old_vertex in self.vertices[level]:
-            if old_vertex not in del_vertices:
-                new_vertices.append(old_vertex)
-                self.vertex_index[level][old_vertex] = len(new_vertices) - 1
-            else:
-                del self.vertex_index[level][old_vertex]
-
-        if new_vertices:
-            self.vertices[level] = new_vertices
-        else:
-            del self.vertex_index[level]
-            del self.vertices[level]
-
-    def remove_level(self, level: int):
-        if level in self.vertices:
-            del self.vertices[level]
-            del self.vertex_index[level]
+class EmptyLevel(Exception):
+    pass
 
 
 class Jump:
@@ -76,7 +35,7 @@ class Jump:
         # Register initial layer
         for state in initial_layer:
             self.levelset.register(state, self.last_level)
-            self.jl[state, self.last_level] = 0  # TODO: no special case for initial state
+            self.jl[state, self.last_level] = 0
 
         self.extend_layer(0, nonjump_adj)
         self.count_ingoing_jumps[0] = numpy.zeros(
@@ -107,7 +66,7 @@ class Jump:
                                                       self.jl[source, last_level])
 
         if next_level not in self.levelset.vertices:
-            raise EmptyLangage
+            raise EmptyLevel
 
         # TODO: isn't there a better way of organizing this?
         self.extend_layer(next_level, nonjump_adj)
@@ -180,9 +139,7 @@ class Jump:
         return numpy.sum(self.reach[sublevel, level][:, vertices], axis=1)
 
     def clean_layer(self, layer, adj):
-        '''
-        TODO: doc
-        '''
+        # TODO: doc
         if layer not in self.levelset.vertices:
             return False
 
@@ -292,29 +249,3 @@ class Jump:
                         break
 
         return j, gamma2
-
-
-# TODO: It may be relevent to store nodes of a level in a bit mask and to use
-#       numpy operations instead
-class IndexedDag:
-
-    def __init__(self, va: VA, document: str):
-        self.va = va
-        self.document = document
-
-        self.jump = Jump([self.va.initial], self.va.get_adj_for_assignations())
-        levels_iter = tqdm.trange(len(self.document),
-                                  desc='preprocessing',
-                                  unit='B', unit_scale=True,
-                                  dynamic_ncols=True)
-
-        for curr_level in levels_iter:
-            curr_letter = self.document[curr_level]
-            self.jump.next_layer(self.va.get_adj_for_char(curr_letter),
-                                 self.va.get_adj_for_assignations())
-
-            # Clean the level at exponential depth
-            depth = curr_level & -curr_level
-
-            for level in range(curr_level, curr_level - depth, -1):
-                self.jump.clean_layer(level, self.va.get_adj_for_assignations())

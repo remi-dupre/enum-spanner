@@ -118,6 +118,8 @@ class VA:
             if isinstance(label, Variable.Marker):
                 adj[source].append((label, target))
 
+        return adj
+
         # Compute closure
         ret = [[] for _ in range(self.nb_states)]
 
