@@ -8,7 +8,12 @@ from va import VA
 
 
 class IndexedDag:
+    '''
+    DAG built from the product automaton of a variable automaton and a text.
 
+    The structure allows to enumerate efficiently all the distinct matches of
+    the input automata over the input text.
+    '''
     def __init__(self, va: VA, document: str):
         self.va = va
         self.document = document

@@ -9,7 +9,16 @@ class EmptyLevel(Exception):
 
 
 class Jump:
+    '''
+    Generic Jump function inside a product DAG.
 
+    The DAG will be built layer by layer by specifying the adjacency matrix
+    from one level to the next one, an adjancency matrix can specify the
+    structure inside of a level, made of 'assignation edges'. The goal of the
+    structure is to be able to be able to navigate quickly from the last to the
+    first layer by being able to skip any path that do not contain any
+    assignation edges.
+    '''
     def __init__(self, initial_level, nonjump_adj):
         # Layers in the levelset will be built one by one
         self.levelset = LevelSet()
@@ -75,6 +84,10 @@ class Jump:
 
     @benchmark.track
     def extend_level(self, level, nonjump_adj):
+        '''
+        Extend current level by reading non-jumpable edges inside the given
+        level.
+        '''
         # Register non-jumpable transitions inside next level
         for source in self.levelset.vertices[level]:
             for target in nonjump_adj[source]:
@@ -85,6 +98,10 @@ class Jump:
 
     @benchmark.track
     def compute_reach(self, level, jump_adj):
+        '''
+        Compute reach and rlevel, that is the effective jump points to all
+        levels reachable from the current level.
+        '''
         # Update rlevel
         self.rlevel[level] = {self.jl[vertex, level]
                               for vertex in self.levelset.vertices[level]
@@ -139,7 +156,11 @@ class Jump:
         return numpy.sum(self.reach[sublevel, level][:, vertices], axis=1)
 
     def clean_level(self, level, adj):
-        # TODO: doc
+        '''
+        Remove all useless nodes inside current level. A useless node is a node
+        from which there is no path of assignation to a node which can be
+        jumped to.
+        '''
         if level not in self.levelset.vertices:
             return False
 
@@ -225,6 +246,11 @@ class Jump:
         return True
 
     def __call__(self, level, gamma):
+        '''
+        Jump to the next relevel level from vertices in gamma at a given level.
+        A relevent level has a node from which there is a path to gamma and
+        that has an ingoing assignation.
+        '''
         i = level
         j = max((self.jl[vertex, level]
                  for vertex in gamma
