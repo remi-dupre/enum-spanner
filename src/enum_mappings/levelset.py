@@ -1,8 +1,9 @@
 class LevelSet:
     '''
-    Represent the partitioning into levels of a product graph. A same vertex
-    can be store in several levels, and this level hierarchy can be accessed
-    rather efficiently.
+    Represent the partitioning into levels of a product graph.
+
+    A same vertex can be store in several levels, and this level hierarchy can
+    be accessed rather efficiently.
     '''
     def __init__(self):
         # Index level -> vertices list
