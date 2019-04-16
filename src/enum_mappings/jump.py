@@ -165,6 +165,9 @@ class Jump:
         if level not in self.levelset.vertices:
             return False
 
+        if level == 0:
+            return False  # TODO: fix the reach[0, 0] exception
+
         # Run over the level and eliminate all path that are not usefull ie.
         # paths that don't access to a jumpable vertex
 
@@ -213,22 +216,13 @@ class Jump:
             removed_columns = [self.levelset.vertex_index[level][x]
                                for x in del_vertices]
 
-            for uplevel in self.rev_rlevel[level]:
-                self.reach[level, uplevel] = numpy.delete(
-                    self.reach[level, uplevel], removed_columns, axis=0)
-
             for sublevel in self.rlevel[level]:
                 self.count_ingoing_jumps[sublevel] -= self.count_inbetween_jumps(
                     removed_columns, level, sublevel)
 
-                self.reach[sublevel, level] = numpy.delete(
-                    self.reach[sublevel, level], removed_columns, axis=1)
-
         # Apply deletion
         with benchmark.track_block('clean: apply'):
             self.levelset.remove_from_level(level, del_vertices)
-            self.count_ingoing_jumps[level] = numpy.delete(
-                self.count_ingoing_jumps[level], removed_columns)
 
             for vertex in del_vertices:
                 if (vertex, level) in self.jl:
@@ -247,6 +241,30 @@ class Jump:
 
                 del self.rlevel[level]
                 del self.rev_rlevel[level]
+                del self.count_ingoing_jumps[level]
+            else:
+                # Update rlevel
+                new_rlevel = {self.jl[vertex, level]
+                              for vertex in self.levelset.vertices[level]
+                              if (vertex, level) in self.jl}
+
+                for sublevel in self.rlevel[level] - new_rlevel:
+                    self.rev_rlevel[sublevel].remove(level)
+                    del self.reach[sublevel, level]
+
+                self.rlevel[level] = new_rlevel
+
+                # Update reach matrices
+                self.count_ingoing_jumps[level] = numpy.delete(
+                    self.count_ingoing_jumps[level], removed_columns)
+
+                for uplevel in self.rev_rlevel[level]:
+                    self.reach[level, uplevel] = numpy.delete(
+                        self.reach[level, uplevel], removed_columns, axis=0)
+
+                for sublevel in self.rlevel[level]:
+                    self.reach[sublevel, level] = numpy.delete(
+                        self.reach[sublevel, level], removed_columns, axis=1)
 
         return True
 
