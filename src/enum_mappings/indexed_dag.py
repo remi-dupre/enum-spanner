@@ -36,8 +36,7 @@ class IndexedDag:
             for level in range(curr_level, curr_level - depth, -1):
                 self.jump.clean_level(level, self.va.get_adj_for_assignations())
 
-            levels_iter.set_postfix({'levels': len(self.jump.levelset.vertices),
-                                     'reachs': len(self.jump.reach)})
+            levels_iter.set_postfix({'levels': len(self.jump.levelset.vertices)})
 
 
     def follow_SpSm(self, gamma: list, Sp: list, Sm: list):
