@@ -170,7 +170,6 @@ class Jump:
 
         # Run over the level and eliminate all path that are not usefull ie.
         # paths that don't access to a jumpable vertex
-
         with benchmark.track_block('clean: select vertices'):
             seen = set()
             lvl_vertices = set(self.levelset.vertices[level])
@@ -211,14 +210,8 @@ class Jump:
             if not del_vertices:
                 return False
 
-        # Update count of ingoing jump pointers for reachable levels
-        with benchmark.track_block('clean: update counts'):
-            removed_columns = [self.levelset.vertex_index[level][x]
-                               for x in del_vertices]
-
-            for sublevel in self.rlevel[level]:
-                self.count_ingoing_jumps[sublevel] -= self.count_inbetween_jumps(
-                    removed_columns, level, sublevel)
+        removed_columns = [self.levelset.vertex_index[level][x]
+                           for x in del_vertices]
 
         # Apply deletion
         with benchmark.track_block('clean: apply'):
@@ -230,6 +223,8 @@ class Jump:
 
             if level not in self.levelset.vertices:
                 for sublevel in self.rlevel[level]:
+                    self.count_ingoing_jumps[sublevel] -= (
+                        self.count_inbetween_jumps(None, level, sublevel))
                     del self.reach[sublevel, level]
 
                 for uplevel in self.rev_rlevel[level]:
@@ -248,13 +243,26 @@ class Jump:
                               for vertex in self.levelset.vertices[level]
                               if (vertex, level) in self.jl}
 
+                # Update jump counters to sublevels, if a sublevel is removed
+                # from rlevel, then we need to remove jump pointers from any
+                # vertex of the level, overwise only from removed vertices.
+                for sublevel in self.rlevel[level] - new_rlevel:
+                    self.count_ingoing_jumps[sublevel] -= (
+                        self.count_inbetween_jumps(None, level, sublevel))
+
+                for sublevel in new_rlevel:
+                    self.count_ingoing_jumps[sublevel] -= (
+                        self.count_inbetween_jumps(removed_columns, level,
+                                                   sublevel))
+
+                # Remove deprecated links in reach and rlevel
                 for sublevel in self.rlevel[level] - new_rlevel:
                     self.rev_rlevel[sublevel].remove(level)
                     del self.reach[sublevel, level]
 
                 self.rlevel[level] = new_rlevel
 
-                # Update reach matrices
+                # Update reach
                 self.count_ingoing_jumps[level] = numpy.delete(
                     self.count_ingoing_jumps[level], removed_columns)
 
