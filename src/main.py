@@ -31,7 +31,7 @@ parser.add_argument(
     'regexp', type=str, help='the pattern to look for')
 
 parser.add_argument(
-    'file', type=argparse.FileType('w'), nargs='?', default=sys.stdin,
+    'file', type=argparse.FileType('r'), nargs='?', default=sys.stdin,
     help='The file to be read, if none is specified, STDIN is used')
 
 parser.add_argument(
