@@ -5,8 +5,11 @@ This tool allows you to find efficiently all matches of a regular expression in
 a string, i.e., find all contiguous substrings of the string that satisfy the
 regular expression (including overlapping substrings).
 
-**The tool is being actively developed and has not been thoroughly tested yet.
-Use at your own risk.**
+**The tool has not been thoroughly tested yet. Use at your own risk.**
+
+A faster version of this tool (in Rust) is available
+[here](https://github.com/remi-dupre/enum-spanner-rs). The version in this
+repository (in Python) is no longer actively developed.
 
 Installation
 ------------
@@ -71,7 +74,7 @@ Spanners](https://arxiv.org/abs/1807.09320)*, by [Amarilli](https://a3nm.net/),
 [Bourhis](http://cristal.univ-lille.fr/~bourhis/),
 [Mengel](http://www.cril.univ-artois.fr/~mengel/) and
 [Niewerth](http://www.theoinf.uni-bayreuth.de/en/team/niewerth_matthias/index.php).
-It will be presented at the [ICDT'19](http://edbticdt2019.inesc-id.pt/) conference.
+It was presented at the [ICDT'19](http://edbticdt2019.inesc-id.pt/) conference.
 
 The tool will first compile the regular expression into a nondeterministic
 finite automaton, and then apply an *enumeration algorithm*. Specifically, it
