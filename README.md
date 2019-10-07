@@ -1,15 +1,18 @@
 Constant-Delay Enumeration for Nondeterministic Document Spanners
 =================================================================
 
+**A faster version of this tool (in Rust) is available
+[here](https://github.com/remi-dupre/enum-spanner-rs). The version in this
+repository (in Python) is no longer actively developed.**
+
+Purpose
+-------
+
 This tool allows you to find efficiently all matches of a regular expression in
 a string, i.e., find all contiguous substrings of the string that satisfy the
 regular expression (including overlapping substrings).
 
-**The tool has not been thoroughly tested yet. Use at your own risk.**
-
-A faster version of this tool (in Rust) is available
-[here](https://github.com/remi-dupre/enum-spanner-rs). The version in this
-repository (in Python) is no longer actively developed.
+The tool has not been thoroughly tested yet. Use at your own risk.
 
 Installation
 ------------
