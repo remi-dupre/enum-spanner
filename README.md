@@ -17,7 +17,10 @@ The tool has not been thoroughly tested yet. Use at your own risk.
 Installation
 ------------
 
-On a Linux system with Python 3, simply clone this repository, then install the
+You need a Linux system with a recent installation of Python 3 (at least Python
+3.6).
+
+To install the software, simply clone this repository, then install the
 necessary Python modules described in `requirements.txt`. You can either install
 them manually using `pip3`, or setup a virtualenv:
 
