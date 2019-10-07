@@ -4,3 +4,4 @@ lark-parser
 numpy
 termcolor
 tqdm
+wheel
