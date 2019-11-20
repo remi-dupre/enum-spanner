@@ -1,9 +1,8 @@
 Constant-Delay Enumeration for Nondeterministic Document Spanners
 =================================================================
 
-**A faster version of this tool (in Rust) is available
-[here](https://github.com/remi-dupre/enum-spanner-rs). The version in this
-repository (in Python) is no longer actively developed.**
+**This implementation is no longer maintained. A more recent implementation (in
+Rust) is available [here](https://github.com/PoDMR/enum-spanner-rs).**
 
 Purpose
 -------
